@@ -1,0 +1,10 @@
+{
+    "name":  "Active Directory",
+    "type":  "ActiveDirectory",
+    "host":  "dc.termidesk.local",
+    "port":  389,
+    "baseDn":  "DC=termidesk,DC=local",
+    "bindUser":  "CN=termidesk-svc,OU=Service,DC=termidesk,DC=local",
+    "bindPassword":  "",
+    "useSsl":  false
+}

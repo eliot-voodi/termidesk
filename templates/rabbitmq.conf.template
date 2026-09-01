@@ -1,0 +1,3 @@
+## Related doc guide: https://rabbitmq.com/management.html#load-definitions.
+management.load_definitions = /etc/rabbitmq/definitions.json
+tcp_listen_options.keepalive = true

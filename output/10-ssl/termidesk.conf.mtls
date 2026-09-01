@@ -1,0 +1,5 @@
+MTLS_MODE='off'
+MTLS_CONNECTIONS='all'
+MTLS_CLIENT_CERT='/etc/opt/termidesk-vdi/mtls/client.crt'
+MTLS_CLIENT_KEY='/etc/opt/termidesk-vdi/mtls/client.key'
+MTLS_CLIENT_CA='/etc/opt/termidesk-vdi/mtls/ca.crt'

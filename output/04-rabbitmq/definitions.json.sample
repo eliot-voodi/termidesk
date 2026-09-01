@@ -1,0 +1,5 @@
+{
+  "users": [{ "name": "admin", "password_hash": "<hash>", "tags": "administrator" }],
+  "vhosts": [{ "name": "/" }],
+  "permissions": [{ "user": "admin", "vhost": "/", "configure": ".*", "write": ".*", "read": ".*" }]
+}

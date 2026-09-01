@@ -1,0 +1,28 @@
+# Фрагмент /etc/opt/termidesk-vdi/termidesk.conf для кластера Termidesk 7.0
+# Применять через termidesk-config или вручную, затем перезапустить службы
+
+TERMIDESK_FARM_MODE='dispatcher'
+NODE_ROLES='ADMIN,USER'
+NODE_NAME='<уникальное_имя>'
+
+DB_CLUSTER_MODE='cluster'
+DBHOST='192.0.2.10'
+DBHOST2='192.0.2.11'
+DBHOST3='192.0.2.12'
+DBPORT='5432'
+DBNAME='termidesk'
+DBUSER='termideskdb'
+# DBPASS — через scramble или OpenBao
+
+RABBITMQ_URL='amqp://admin:<password>@192.0.2.10:5672/'
+
+# HA — Менеджер рабочих мест
+CELERY_BEAT_PRIMARY_CHECK_INTERVAL='3'
+CELERY_BEAT_PRIMARY_LOCK_TIMEOUT='45'
+CELERY_BEAT_HEALTH_CHECK_IP='<ip_узла>'
+CELERY_WORKER_HEALTH_CHECK_IP='<ip_узла>'
+
+# TermideskMQ (если используется вместо RabbitMQ)
+# TMQ_CLIENT_ID='<pool_id>'
+# TMQ_TIMEOUT_AWAIT_SENDING_MESSAGE='5000'
+# TMQ_PUT_RETRY_COUNT='3'

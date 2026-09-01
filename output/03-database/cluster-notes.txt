@@ -1,0 +1,6 @@
+# Patroni / HAProxy — внешняя настройка кластера PostgreSQL
+# Termidesk DB_CLUSTER_MODE=cluster
+DBHOST=192.0.2.10
+DBHOST2=192.0.2.11
+DBHOST3=192.0.2.12
+DBPORT=5432

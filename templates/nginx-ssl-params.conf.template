@@ -1,0 +1,15 @@
+ssl_protocols {{SSL_PROTOCOLS}};
+ssl_prefer_server_ciphers on;
+ssl_dhparam {{DHPARAM_PATH}};
+ssl_ciphers {{SSL_CIPHERS}};
+ssl_ecdh_curve {{SSL_ECDH_CURVE}};
+ssl_session_timeout  {{SSL_SESSION_TIMEOUT}};
+ssl_session_cache shared:SSL:{{SSL_SESSION_CACHE_SIZE}};
+ssl_session_tickets off;
+ssl_stapling {{SSL_STAPLING}};
+ssl_stapling_verify {{SSL_STAPLING_VERIFY}};
+resolver {{DNS_RESOLVER_PRIMARY}} {{DNS_RESOLVER_SECONDARY}} valid={{DNS_RESOLVER_VALID}}s;
+resolver_timeout {{DNS_RESOLVER_TIMEOUT}}s;
+add_header X-Frame-Options DENY;
+add_header X-Content-Type-Options nosniff;
+add_header X-XSS-Protection "1; mode=block";

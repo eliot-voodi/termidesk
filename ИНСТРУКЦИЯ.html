@@ -1,0 +1,311 @@
+﻿<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>16. Поддержка изменений панели</title><style>:root{--text:#e7ecf3;--muted:#9aa7b8;--accent:#3d8bfd;--accent2:#2bb673;--border:#2a3548;--code:#0b1220;--th:#243044;--panel:#1a2332}
+*{box-sizing:border-box}body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;background:#0f1419;color:var(--text);line-height:1.55}
+a{color:var(--accent)}.layout{display:grid;grid-template-columns:300px 1fr;min-height:100vh}
+.sidebar{position:sticky;top:0;height:100vh;overflow:auto;background:#121820;border-right:1px solid var(--border);padding:1.2rem}
+.toc{list-style:none;padding:0}.toc a{display:block;padding:.25rem .4rem;color:var(--muted);font-size:.86rem;text-decoration:none}
+.toc a:hover{color:#fff}.main{padding:2rem 2.5rem 4rem;max-width:1000px}
+.hero{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:1.4rem;margin-bottom:1.2rem}
+.badge{display:inline-block;background:rgba(43,182,115,.15);color:var(--accent2);border:1px solid rgba(43,182,115,.35);padding:.15rem .5rem;border-radius:999px;font-size:.75rem}
+h2{border-top:1px solid var(--border);padding-top:.5rem;margin-top:2rem}h3,h4{color:#d7e3f4}
+code{font-family:Consolas,monospace;background:rgba(255,255,255,.06);padding:.1rem .35rem;border-radius:4px}
+pre{background:var(--code);border:1px solid var(--border);border-radius:10px;padding:1rem;overflow:auto}pre code{background:none;padding:0;color:#cde3ff}
+.table-wrap{overflow:auto;margin:1rem 0;border:1px solid var(--border);border-radius:10px}table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{padding:.5rem .7rem;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}th{background:var(--th)}
+.callout{background:rgba(61,139,253,.12);border-left:4px solid var(--accent);padding:1rem 1.2rem;margin:1rem 0;border-radius:0 8px 8px 0}
+.navdocs a{margin-right:1rem;font-size:.9rem}@media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{position:relative;height:auto}}</style></head><body>
+<div class="layout"><aside class="sidebar"><div class="badge">Termidesk</div><h1 style="font-size:1rem;color:#fff">Оглавление</h1>
+<ol class="toc"><li class="toc-h1"><a href="#termidesk-vdi-70-панель-администрирования">Termidesk VDI 7.0 — Панель администрирования</a></li>
+<li class="toc-h2"><a href="#полная-инструкция-по-использованию">Полная инструкция по использованию</a></li>
+<li class="toc-h2"><a href="#1-назначение">1. Назначение</a></li>
+<li class="toc-h2"><a href="#2-требования">2. Требования</a></li>
+<li class="toc-h2"><a href="#3-структура-проекта">3. Структура проекта</a></li>
+<li class="toc-h2"><a href="#4-первый-запуск">4. Первый запуск</a></li>
+<li class="toc-h2"><a href="#5-главное-меню-подробное-описание-пунктов">5. Главное меню — подробное описание пунктов</a></li>
+<li class="toc-h2"><a href="#6-файл-настроек-termidesk-settingsjson">6. Файл настроек `termidesk-settings.json`</a></li>
+<li class="toc-h2"><a href="#7-каталог-output18-ha-wizard-содержимое-файлов">7. Каталог `output/18-ha-wizard/` — содержимое файлов</a></li>
+<li class="toc-h2"><a href="#8-рекомендуемый-production-сценарий-чек-лист">8. Рекомендуемый production-сценарий (чек-лист)</a></li>
+<li class="toc-h2"><a href="#9-ssh-как-панель-выполняет-шаги">9. SSH: как панель выполняет шаги</a></li>
+<li class="toc-h2"><a href="#10-порты-ориентир">10. Порты (ориентир)</a></li>
+<li class="toc-h2"><a href="#11-типичные-ошибки-и-решения">11. Типичные ошибки и решения</a></li>
+<li class="toc-h2"><a href="#12-безопасность">12. Безопасность</a></li>
+<li class="toc-h2"><a href="#13-различие-пунктов-1-и-18">13. Различие пунктов [1] и [18]</a></li>
+<li class="toc-h2"><a href="#14-официальная-документация-разделы">14. Официальная документация (разделы)</a></li>
+<li class="toc-h2"><a href="#15-краткая-шпаргалка-команд">15. Краткая шпаргалка команд</a></li>
+<li class="toc-h2"><a href="#16-поддержка-изменений-панели">16. Поддержка изменений панели</a></li>
+</ol>
+<div class="navdocs"><a href="ИНСТРУКЦИЯ.html">Инструкция</a><a href="НАСТРОЙКА-КЛАСТЕРА.html">Кластер</a></div>
+</aside><main class="main"><div class="hero"><div class="badge">HTML</div><h1>16. Поддержка изменений панели</h1></div>
+<h1 id="termidesk-vdi-70-панель-администрирования">Termidesk VDI 7.0 — Панель администрирования</h1>
+<h2 id="полная-инструкция-по-использованию">Полная инструкция по использованию</h2>
+<hr>
+<h2 id="1-назначение">1. Назначение</h2>
+<ol>
+<li>Собрать параметры развёртывания Termidesk VDI 7.0 в интерактивном режиме.</li>
+<li>Сохранить их в <code>config/termidesk-settings.json</code>.</li>
+<li>Сгенерировать bash/PowerShell-скрипты и конфиги в каталог <code>output/</code>.</li>
+<li>(Опционально) выполнить шаги на Linux-узлах по SSH из Windows.</li>
+<li>Настроить домены, поставщиков, фонды VDI, мониторинг, backup и журналирование.</li>
+<hr>
+<h2 id="2-требования">2. Требования</h2></div><h3 id="21-рабочая-станция-администратора-windows">2.1. Рабочая станция администратора (Windows)</h3>
+<pre><code>Get-Command ssh, scp
+ssh -V</code></pre></div><h3 id="22-политика-выполнения-скриптов">2.2. Политика выполнения скриптов</h3>
+<pre><code>Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned</code></pre>
+<pre><code>powershell -ExecutionPolicy Bypass -File .\Start-TermideskMenu.ps1</code></pre></div><h3 id="23-кодировка-файлов-критично">2.3. Кодировка файлов (критично)</h3>
+<ul>
+<li>В меню вместо «Показать» видно <code>ÐŸÐ¾ÐºÐ°Ð·Ð°Ñ‚ÑŒ</code></li>
+<li>ParserError: <code>Unexpected token</code>, <code>The string is missing the terminator</code></li>
+<ol>
+<li>Берите свежую копию проекта из исходного каталога (после исправления BOM).</li>
+<li>Не открывайте и не сохраняйте <code>.ps1</code> в редакторах, которые снимают BOM (или пересохраняйте как UTF-8 with BOM).</li>
+<li>Не распаковывайте архив через утилиты, меняющие кодировку текста.</li></div><h3 id="24-целевые-узлы-linux">2.4. Целевые узлы (Linux)</h3>
+<ul>
+<li>Astra Linux SE / CE (или ОС из матрицы совместимости Termidesk 7.0).</li>
+<li>Доступ <code>sudo</code> для пользователя SSH.</li>
+<li>Синхронизация времени (NTP) между всеми узлами.</li>
+<li>DNS-записи (A/AAAA или <code>/etc/hosts</code>) для всех FQDN.</li>
+<li>Открытые порты между компонентами (см. раздел 10).</li>
+<li>Доступ к репозиторию пакетов Termidesk 7.0.</li></div><h3 id="25-рекомендуемый-состав-ha-standard">2.5. Рекомендуемый состав HA (standard)</h3>
+<hr>
+<h2 id="3-структура-проекта">3. Структура проекта</h2>
+<pre><code>termidesk/
+├── Start-TermideskMenu.ps1          # Точка входа — главное меню
+├── ИНСТРУКЦИЯ.md                    # Инструкция (Markdown)
+├── ИНСТРУКЦИЯ.html                  # Инструкция (HTML, удобно в браузере)
+├── config/
+│   ├── termidesk-settings.example.json   # Шаблон настроек (примеры)
+│   ├── termidesk-settings.json           # Рабочий конфиг (создаётся при запуске)
+│   ├── cluster-config.json               # Синхронизированный legacy-конфиг HA
+│   ├── cluster-config.example.json
+│   └── ha-wizard-state.json              # Прогресс шагов пункта [18]
+├── modules/
+│   ├── Termidesk.Common.psm1        # Общие функции, SSH, настройки, шаблоны
+│   ├── Termidesk.UI.psm1            # Баннер, меню, ссылки на docs
+│   ├── Termidesk.Cluster.psm1       # Пункт [1] — HA с подсказками/defaults
+│   ├── Termidesk.HaWizard.psm1      # Пункт [18] — HA без хардкода
+│   ├── Termidesk.Infrastructure.psm1# Пункты [2]–[5]
+│   ├── Termidesk.Components.psm1    # Пункты [6]–[11]
+│   ├── Termidesk.Portal.psm1        # Пункты [12]–[14]
+│   └── Termidesk.Operations.psm1    # Пункты [15]–[17], генерация всех артефактов
+├── templates/
+│   ├── nginx-site.conf.template
+│   ├── nginx-ssl-cert.conf.template
+│   ├── nginx-ssl-params.conf.template
+│   ├── rabbitmq.conf.template
+│   ├── rabbitmq-env.conf.template
+│   └── termidesk-vdi.local.template
+└── output/                          # Сгенерированные скрипты и гайды
+    ├── 02-prepare/
+    ├── 03-database/
+    ├── … 
+    ├── 18-ha-wizard/                # Артефакты пошагового HA
+    └── cluster-standard/            # Артефакты пункта [1]</code></pre>
+<hr>
+<h2 id="4-первый-запуск">4. Первый запуск</h2>
+<ol>
+<li>Скопируйте каталог <code>termidesk</code> целиком (без потери BOM).</li>
+<li>Откройте PowerShell в каталоге проекта:</li>
+<pre><code>cd C:\path\to\termidesk
+.\Start-TermideskMenu.ps1</code></pre>
+<li>При первом запуске, если нет <code>config/termidesk-settings.json</code>, он создаётся из <code>termidesk-settings.example.json</code>.</li>
+<li>Откроется главное меню.</li></div><h3 id="41-что-выбрать-в-начале">4.1. Что выбрать в начале</h3>
+<hr>
+<h2 id="5-главное-меню-подробное-описание-пунктов">5. Главное меню — подробное описание пунктов</h2></div><h3 id="1-отказоустойчивый-кластер-полная-настройка-ha">[1] Отказоустойчивый кластер (полная настройка HA)</h3>
+<hr></div><h3 id="18-пошаговая-настройка-ha-кластера-без-захардкоженных-параметров">[18] Пошаговая настройка HA-кластера (без захардкоженных параметров)</h3>
+<ul>
+<li>Нет подстановки <code>termidesk.local</code>, <code>192.0.2.x</code>, путей сертификатов Yandex DNS и т.п.</li>
+<li>Все обязательные поля вводятся вручную.</li>
+<li>Подсказки (Hint) — только примеры формата, не defaults.</li>
+<li>Результат пишется в <code>termidesk-settings.json</code> + артефакты <code>output/18-ha-wizard/</code>.</li>
+<li>Прогресс шагов — в <code>config/ha-wizard-state.json</code> (метки <code>[✓]</code>).</li>
+<h4 id="подменю-18">Подменю [18]</h4>
+<h4 id="этапы-мастера-сбора-параметров-18-1">Этапы мастера сбора параметров [18] → [1]</h4>
+<li><code>[1] Стандартный</code> — диспетчеры и CeleryMan на разных узлах (рекомендуется).</li>
+<li><code>[2] Минимальный</code> — CeleryMan на диспетчерах.</li>
+<hr>
+<hr>
+<pre><code>ssh -p &lt;порт&gt; &lt;user&gt;@&lt;ip&gt; "sudo -n true &amp;&amp; hostname"</code></pre>
+<hr>
+<hr>
+<hr>
+<li><code>SECRETS_STORAGE_METHOD=openbao</code></li>
+<li>Указываются URL OpenBao, KV version, AppRole, пути секретов БД и RabbitMQ</li>
+<hr>
+<h4 id="вопрос-мастера-путь-к-dhparampem-что-он-хочет">Вопрос мастера «Путь к dhparam.pem» — что он хочет</h4>
+<pre><code>/etc/nginx/dhparam.pem</code></pre>
+<div class="callout"><h4 id="как-сделать-dhparampem-на-балансировщике-linux">Как сделать dhparam.pem (на балансировщике Linux)</h4>
+<pre><code>ssh USER@IP_БАЛАНСИРОВЩИКА
+sudo mkdir -p /etc/nginx
+sudo apt install -y openssl    # если ещё не установлен
+sudo openssl dhparam -out /etc/nginx/dhparam.pem 4096
+ls -lh /etc/nginx/dhparam.pem  # проверка; генерация 4096 может занять много минут</code></pre>
+<hr>
+<li>Количество ≥ 2.</li>
+<li>Для каждого: <code>NODE_NAME</code>, <code>FQDN</code>, <code>IP</code>.</li>
+<li>Первый узел помечается <strong>эталонным</strong> (<code>isReference</code>) — с него копируется <code>/etc/opt/termidesk-vdi</code> на остальные.</li>
+<li><code>NODE_ROLES</code>: для standard обычно <code>ADMIN,USER</code>; для minimal — <code>ADMIN,USER,CELERYMAN</code>.</li>
+<li>URL портала администратора, логин/пароль admin.</li>
+<hr>
+<li>≥ 2 отдельных узла.</li>
+<li>Порты health-check beat/worker (типично <code>8103</code> / <code>8104</code>).</li>
+<hr>
+<li><code>coordinatorUrl</code> — например <code>amqp://user@rabbit-host:5672/</code></li>
+<li><code>coordinatorUser</code> / <code>coordinatorPass</code></li>
+<li><code>healthCheckPath</code> — например <code>/api/health</code></li>
+<hr>
+<li><code>daas-upstream-ws</code> → шлюзы <code>IP:websockify</code></li>
+<li><code>daas-upstream-nodes</code> → диспетчеры <code>IP:dispatcherPort</code></li>
+<hr>
+<li><code>HEALTH_CHECK_ACCESS_KEY</code> — ключ доступа к health API Termidesk</li>
+<li><code>METRICS_ACCESS_KEY</code> — необязательно</li>
+<hr>
+<ol>
+<li>Пишется <code>config/termidesk-settings.json</code></li>
+<li>Синхронизируется <code>config/cluster-config.json</code></li>
+<li>Генерируются файлы в <code>output/18-ha-wizard/</code></li>
+<li>Обнуляется прогресс развёртывания (фаза <code>configured</code>)</li>
+<h4 id="порядок-развёртывания-после-сбора-параметров">Порядок развёртывания после сбора параметров</h4>
+<hr></div><h3 id="2-подготовка-среды-функционирования">[2] Подготовка среды функционирования</h3>
+<ul>
+<li>[ ] NTP работает, время одинаковое</li>
+<li>[ ] DNS/hosts резолвят все FQDN</li>
+<li>[ ] Репозиторий Termidesk доступен</li>
+<li>[ ] Порты между ролями открыты</li>
+<li>[ ] SELinux/AppArmor/политики по требованиям вендора</li>
+<hr></div><h3 id="3-настройка-субд-postgresql">[3] Настройка СУБД PostgreSQL</h3>
+<hr></div><h3 id="4-настройка-rabbitmq-termideskmq">[4] Настройка RabbitMQ / TermideskMQ</h3>
+<hr></div><h3 id="5-настройка-openbao">[5] Настройка OpenBao</h3>
+<hr></div><h3 id="6-установка-универсального-диспетчера">[6] Установка Универсального диспетчера</h3>
+<li><code>TERMIDESK_FARM_MODE=dispatcher</code></li>
+<li><code>NODE_NAME</code>, <code>NODE_ROLES</code></li>
+<li><code>DB_*</code>, <code>RABBITMQ_*</code></li>
+<li><code>SECRETS_STORAGE_METHOD</code></li>
+<li><code>HEALTH_CHECK_ACCESS_KEY</code></li>
+<hr></div><h3 id="7-установка-менеджера-рабочих-мест-celeryman">[7] Установка Менеджера рабочих мест (CeleryMan)</h3>
+<hr></div><h3 id="8-termidesk-connect-шлюз">[8] Termidesk Connect (Шлюз)</h3>
+<hr></div><h3 id="9-балансировщик-nginx">[9] Балансировщик nginx</h3>
+<pre><code>sudo nginx -t
+sudo systemctl status nginx
+curl -kI https://&lt;VIP-FQDN&gt;/</code></pre>
+<hr></div><h3 id="10-ssltls-и-сертификаты">[10] SSL/TLS и сертификаты</h3>
+<hr></div><h3 id="11-утилита-termidesk-config">[11] Утилита termidesk-config</h3>
+<hr></div><h3 id="12-домены-и-аутентификация">[12] Домены и аутентификация</h3>
+<hr></div><h3 id="13-поставщики-ресурсов-и-фонды-vdi">[13] Поставщики ресурсов и фонды VDI</h3>
+<hr></div><h3 id="14-агрегатор">[14] Агрегатор</h3>
+<hr></div><h3 id="15-мониторинг-и-health-check">[15] Мониторинг и Health Check</h3>
+<hr></div><h3 id="16-резервное-копирование-и-восстановление">[16] Резервное копирование и восстановление</h3>
+<hr></div><h3 id="17-журналирование-аудит-и-syslog">[17] Журналирование, аудит и syslog</h3>
+<hr></div><h3 id="c-конфигурация">[C] Конфигурация</h3>
+<hr></div><h3 id="a-сгенерировать-все-скрипты-и-конфиги">[A] Сгенерировать ВСЕ скрипты и конфиги</h3>
+<hr></div><h3 id="o-открыть-каталог-output">[O] Открыть каталог output/</h3>
+<hr></div><h3 id="d-ссылки-на-документацию-termidesk-70">[D] Ссылки на документацию Termidesk 7.0</h3>
+<hr></div><h3 id="h-инструкция">[H] Инструкция</h3>
+<hr></div><h3 id="0-выход">[0] Выход</h3>
+<hr>
+<h2 id="6-файл-настроек-termidesk-settingsjson">6. Файл настроек <code>termidesk-settings.json</code></h2></div><h3 id="61-portal">6.1. <code>portal</code></h3>
+<li><code>url</code> — HTTPS URL портала администрирования</li>
+<li><code>adminUser</code> / <code>adminPassword</code> — учётка API/портала</li>
+<li><code>verifySsl</code> — проверка сертификата при REST-вызовах с Windows</li></div><h3 id="62-ssh">6.2. <code>ssh</code></h3>
+<li><code>user</code>, <code>port</code>, <code>keyPath</code> — параметры удалённого выполнения</li></div><h3 id="63-environment">6.3. <code>environment</code></h3>
+<li><code>domain</code>, <code>ntpServer</code>, <code>termideskRepo</code>, <code>astraRepo</code></li></div><h3 id="64-cluster">6.4. <code>cluster</code></h3>
+<li><code>deploymentType</code> — <code>standard</code> | <code>minimal</code></li>
+<li><code>secretsStorage</code> — <code>config</code> | <code>openbao</code></li>
+<li><code>referenceNode</code>, <code>dispatchers[]</code>, <code>celeryManagers[]</code>, <code>gateways[]</code></li>
+<li><code>loadBalancers.fqdn</code>, <code>vip</code>, <code>nodes[]</code></li>
+<li><code>nginx.*</code> — listen, порты, каталоги snippets</li>
+<li><code>tls.*</code> — mode, пути сертификатов, cipher/stapling, DNS resolvers</li></div><h3 id="65-database-rabbitmq-openbao-dispatcher-celery-gateway-monitoring">6.5. <code>database</code> / <code>rabbitmq</code> / <code>openbao</code> / <code>dispatcher</code> / <code>celery</code> / <code>gateway</code> / <code>monitoring</code></h3>
+<ol>
+<li>Через мастера меню</li>
+<li>Вручную в JSON (валидный JSON, UTF-8), затем <strong>[A]</strong> или <strong>[18]→[3]</strong> для перегенерации скриптов</li>
+<hr>
+<h2 id="7-каталог-output18-ha-wizard-содержимое-файлов">7. Каталог <code>output/18-ha-wizard/</code> — содержимое файлов</h2>
+<hr>
+<h2 id="8-рекомендуемый-production-сценарий-чек-лист">8. Рекомендуемый production-сценарий (чек-лист)</h2>
+<li>Спроектировать схему узлов, VIP, DNS, сертификаты, сети.</li>
+<li>Подготовить ОС, NTP, firewall, репозитории (можно начать с [2]).</li>
+<li>Поднять HA PostgreSQL и проверить failover.</li>
+<li>Поднять RabbitMQ (кластер при необходимости).</li>
+<li>Запустить панель → <strong>[18] → [1]</strong> — ввести все параметры.</li>
+<li>Проверить JSON → <strong>[18] → [2]</strong>.</li>
+<li>Выполнить шаги <strong>[18] → 1…8</strong> по порядку (SSH + ручные гайды).</li>
+<li>Проверить <strong>[18] → 9</strong> и веб-вход на VIP.</li>
+<li>Настроить домены <strong>[12]</strong>, поставщиков и фонды <strong>[13]</strong>.</li>
+<li>Включить мониторинг <strong>[15]</strong>, backup <strong>[16]</strong>, логи <strong>[17]</strong>.</li>
+<li>Зафиксировать пароли в секретнице; ограничить ACL на <code>termidesk-settings.json</code>.</li>
+<hr>
+<h2 id="9-ssh-как-панель-выполняет-шаги">9. SSH: как панель выполняет шаги</h2>
+<li>Скрипт сохраняется во временный файл на Windows.</li>
+<li><code>scp</code> копирует его в <code>/tmp/</code> на целевой узел.</li>
+<li><code>ssh … sudo bash /tmp/&lt;script&gt;</code> запускает выполнение.</li>
+<li>Код возврата отображается в консоли.</li>
+<ul>
+<li>Пользователь в <code>sudoers</code> (желательно NOPASSWD для автоматизации или интерактивный ввод пароля sudo).</li>
+<li>Доступность TCP SSH-порта.</li>
+<li>Для ключа — корректный <code>keyPath</code> в настройках.</li>
+<hr>
+<h2 id="10-порты-ориентир">10. Порты (ориентир)</h2>
+<li>LB → диспетчеры (<code>dispatcherPort</code>)</li>
+<li>LB → шлюзы (websockify port)</li>
+<li>Диспетчеры/Celery → PostgreSQL, RabbitMQ</li>
+<li>Шлюзы → RabbitMQ</li>
+<li>Клиенты → VIP :443 (и :80 при редиректе)</li>
+<hr>
+<h2 id="11-типичные-ошибки-и-решения">11. Типичные ошибки и решения</h2></div><h3 id="parsererror-кракозябры-в-меню">ParserError / кракозябры в меню</h3></div><h3 id="join-path-path-is-null-в-пункте-18"><code>Join-Path … Path is null</code> в пункте [18]</h3></div><h3 id="ssh-scp-не-найдены"><code>ssh</code> / <code>scp</code> не найдены</h3></div><h3 id="permission-denied-sudo-password">Permission denied / sudo password</h3></div><h3 id="nginx-duplicate-ssl-ошибка-nginx--t">nginx: duplicate <code>ssl</code> / ошибка <code>nginx -t</code></h3></div><h3 id="диспетчер-не-видит-бд">Диспетчер не видит БД</h3></div><h3 id="шлюз-не-регистрируется">Шлюз не регистрируется</h3></div><h3 id="самоподписанный-сертификат-браузер-ругается">Самоподписанный сертификат — браузер ругается</h3></div><h3 id="мастер-18-спрашивает-путь-к-dhparampem">Мастер [18] спрашивает «Путь к dhparam.pem»</h3></div><h3 id="executionpolicy">ExecutionPolicy</h3></div><h3 id="случайно-загрузили-example-поверх-боевого-json-c2">Случайно загрузили example поверх боевого JSON ([C]→2)</h3>
+<hr>
+<h2 id="12-безопасность">12. Безопасность</h2>
+<ol>
+<li>Не храните боевые пароли в example-файлах и публичных репозиториях.</li>
+<li>Ограничьте NTFS ACL на <code>config\termidesk-settings.json</code>.</li>
+<li>Предпочитайте SSH-ключи паролям.</li>
+<li>В production — корпоративные TLS-сертификаты, не self-signed.</li>
+<li>Рассмотрите OpenBao для секретов БД/брокера.</li>
+<li>Ротируйте <code>HEALTH_CHECK_ACCESS_KEY</code> и пароли БД/RabbitMQ по политике ИБ.</li>
+<li>Логи скриптов могут содержать чувствительные данные — чистите <code>/tmp</code> на узлах.</li>
+<hr>
+<h2 id="13-различие-пунктов-1-и-18">13. Различие пунктов [1] и [18]</h2>
+<hr>
+<h2 id="14-официальная-документация-разделы">14. Официальная документация (разделы)</h2>
+<ul>
+<li>Архитектура</li>
+<li>Подготовка среды функционирования</li>
+<li>Установка / распределённая (HA) конфигурация</li>
+<li>Балансировщик (nginx / distributed-config)</li>
+<li>termidesk-config</li>
+<li>OpenBao</li>
+<li>Домены, поставщики, фонды VDI</li>
+<li>Агрегатор</li>
+<li>Health Check / Zabbix</li>
+<li>Backup / Logging / Audit</li>
+<li>SSL, Gateway (Termidesk Connect)</li>
+<hr>
+<h2 id="15-краткая-шпаргалка-команд">15. Краткая шпаргалка команд</h2>
+<pre><code># Запуск
+cd C:\path\to\termidesk
+.\Start-TermideskMenu.ps1
+
+# Проверка версии PowerShell
+$PSVersionTable.PSVersion
+
+# Проверка SSH
+ssh user@10.0.0.10 hostname
+
+# Ручной просмотр конфига
+Get-Content .\config\termidesk-settings.json -Encoding UTF8
+
+# Открыть инструкцию
+notepad .\ИНСТРУКЦИЯ.md
+# или
+Start-Process .\ИНСТРУКЦИЯ.md</code></pre>
+<pre><code>sudo bash /tmp/08-nginx-lb-setup.sh
+sudo nginx -t
+systemctl status termidesk-vdi rabbitmq-server nginx postgresql</code></pre>
+<hr>
+<h2 id="16-поддержка-изменений-панели">16. Поддержка изменений панели</h2>
+<ol>
+<li>Остановите меню.</li>
+<li>Замените файлы проекта (сохранив свой <code>termidesk-settings.json</code>).</li>
+<li>Убедитесь, что <code>.ps1</code>/<code>.psm1</code> снова с UTF-8 BOM.</li>
+<li>Запустите меню, при необходимости <strong>[18]→[3]</strong> перегенерируйте артефакты.</li>
+<hr>
+
+</main></div></body></html>

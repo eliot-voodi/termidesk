@@ -1,0 +1,240 @@
+{
+  "version": "7.0",
+  "portal": {
+    "url": "https://disp1.termidesk.local",
+    "adminUser": "admin",
+    "adminPassword": "",
+    "verifySsl": false
+  },
+  "ssh": {
+    "user": "admin",
+    "port": 22,
+    "keyPath": ""
+  },
+  "environment": {
+    "domain": "termidesk.local",
+    "ntpServer": "pool.ntp.org",
+    "termideskRepo": "https://download.termidesk.ru/repo/termidesk-vdi/7.0/",
+    "astraRepo": "deb https://download.astralinux.ru/astra/stable/1.8_x86-64/repository-main/ 1.8_x86-64 main contrib non-free"
+  },
+  "cluster": {
+    "deploymentType": "standard",
+    "secretsStorage": "config",
+    "referenceNode": { "name": "Dispatcher-01", "fqdn": "disp1.termidesk.local", "ip": "192.0.2.30" },
+    "dispatchers": [
+      { "name": "Dispatcher-01", "fqdn": "disp1.termidesk.local", "ip": "192.0.2.30", "isReference": true },
+      { "name": "Dispatcher-02", "fqdn": "disp2.termidesk.local", "ip": "192.0.2.31", "isReference": false }
+    ],
+    "celeryManagers": [
+      { "name": "CeleryMan-01", "fqdn": "tsk1.termidesk.local", "ip": "192.0.2.40" },
+      { "name": "CeleryMan-02", "fqdn": "tsk2.termidesk.local", "ip": "192.0.2.41" }
+    ],
+    "gateways": [
+      { "name": "Gateway-01", "fqdn": "tdc-gw1.termidesk.local", "ip": "192.0.2.50", "port": 5099 },
+      { "name": "Gateway-02", "fqdn": "tdc-gw2.termidesk.local", "ip": "192.0.2.51", "port": 5099 }
+    ],
+    "loadBalancers": {
+      "fqdn": "portal.termidesk.local",
+      "vip": "",
+      "useSelfSignedCert": true,
+      "nodes": [
+        { "name": "LB-01", "fqdn": "lb1.termidesk.local", "ip": "192.0.2.60" }
+      ]
+    },
+    "nginx": {
+      "listenHttp": "0.0.0.0:80",
+      "listenHttps": "0.0.0.0:443 ssl",
+      "dispatcherPort": 443,
+      "proxyTimeout": 1000,
+      "snippetsDir": "/etc/nginx/snippets",
+      "sitesAvailableDir": "/etc/nginx/sites-available",
+      "sitesEnabledDir": "/etc/nginx/sites-enabled",
+      "sslSnippetCert": "snippets/ssl-cert.conf",
+      "sslSnippetParams": "snippets/ssl-params.conf"
+    },
+    "tls": {
+      "mode": "selfsigned",
+      "certPath": "/etc/ssl/certs/nginx-selfsigned.crt",
+      "keyPath": "/etc/ssl/private/nginx-selfsigned.key",
+      "dhparamPath": "/etc/nginx/dhparam.pem",
+      "certDays": 365,
+      "certKeySize": 2048,
+      "certSubject": "portal.termidesk.local",
+      "sslProtocols": "TLSv1.3 TLSv1.2",
+      "sslCiphers": "ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384",
+      "sslEcdhCurve": "secp384r1",
+      "sslSessionTimeout": "10m",
+      "sslSessionCacheSize": "10m",
+      "sslStapling": "on",
+      "sslStaplingVerify": "on",
+      "dnsResolverPrimary": "10.0.0.1",
+      "dnsResolverSecondary": "10.0.0.2",
+      "dnsResolverValid": 300,
+      "dnsResolverTimeout": 5
+    }
+  },
+  "database": {
+    "clusterMode": "cluster",
+    "host1": "192.0.2.10",
+    "host2": "192.0.2.11",
+    "host3": "192.0.2.12",
+    "port": 5432,
+    "name": "termidesk",
+    "user": "termideskdb",
+    "password": "",
+    "pgHbaNetwork": "192.0.2.0/24",
+    "maxConnections": 100,
+    "ssl": false
+  },
+  "rabbitmq": {
+    "brokerType": "rabbitmq",
+    "host": "192.0.2.10",
+    "port": 5672,
+    "managementPort": 15672,
+    "user": "admin",
+    "password": "",
+    "vhost": "/",
+    "ssl": false
+  },
+  "termideskMq": {
+    "baseAddress": "0.0.0.0",
+    "basePort": 50000,
+    "clientId": "default",
+    "timeoutMs": 5000,
+    "retryCount": 3
+  },
+  "openbao": {
+    "enabled": false,
+    "url": "http://openbao.termidesk.local:8200",
+    "kvVersion": "2",
+    "tokenPath": "/etc/opt/termidesk-vdi/openbao-token",
+    "roleName": "termidesk",
+    "roleId": "",
+    "dbPath": "secret/termidesk/db",
+    "rabbitmqPath": "secret/termidesk/rabbitmq",
+    "termideskPath": "secret/termidesk/other",
+    "cacheLifetime": 300,
+    "namespace": ""
+  },
+  "dispatcher": {
+    "nodeRoles": "ADMIN,USER",
+    "nodeName": "Dispatcher-01",
+    "farmMode": "dispatcher"
+  },
+  "celery": {
+    "nodeRoles": "CELERYMAN",
+    "beatHealthCheckPort": 8103,
+    "workerHealthCheckPort": 8104,
+    "beatHealthCheckIp": "",
+    "workerHealthCheckIp": "",
+    "primaryCheckInterval": 3,
+    "primaryLockTimeout": 45
+  },
+  "gateway": {
+    "coordinatorUrl": "amqp://admin@192.0.2.10:5672/",
+    "coordinatorUser": "admin",
+    "coordinatorPass": "",
+    "coordinatorTimeout": 30,
+    "coordinatorRefreshTime": 60,
+    "healthCheckPath": "/api/health",
+    "listenPort": 5099
+  },
+  "nginx": {
+    "fqdn": "portal.termidesk.local",
+    "certPath": "/etc/ssl/certs/nginx-selfsigned.crt",
+    "keyPath": "/etc/ssl/private/nginx-selfsigned.key"
+  },
+  "ssl": {
+    "certFile": "/etc/ssl/certs/termidesk.crt",
+    "keyFile": "/etc/ssl/private/termidesk.key",
+    "chainFile": "",
+    "redirectHttps": true,
+    "mtlsMode": "off"
+  },
+  "termideskConfig": {
+    "logLevel": "INFO",
+    "logDir": "/var/log/termidesk",
+    "languageCode": "ru",
+    "djangoSecretKey": "",
+    "healthCheckAccessKey": "",
+    "metricsAccessKey": ""
+  },
+  "domains": [
+    {
+      "name": "Active Directory",
+      "type": "ActiveDirectory",
+      "host": "dc.termidesk.local",
+      "port": 389,
+      "baseDn": "DC=termidesk,DC=local",
+      "bindUser": "CN=termidesk-svc,OU=Service,DC=termidesk,DC=local",
+      "bindPassword": "",
+      "useSsl": false
+    }
+  ],
+  "providers": [
+    {
+      "name": "oVirt Provider",
+      "type": "oVirt",
+      "host": "ovirt.termidesk.local",
+      "port": 443,
+      "username": "admin@internal",
+      "password": "",
+      "verifySsl": false
+    }
+  ],
+  "pools": [
+    {
+      "name": "VDI Pool 01",
+      "providerName": "oVirt Provider",
+      "templateName": "Win11-VDI-Template",
+      "maxDesktops": 10,
+      "minDesktops": 2,
+      "protocol": "TERA",
+      "network": "default"
+    }
+  ],
+  "aggregator": {
+    "enabled": false,
+    "url": "https://aggr.termidesk.local",
+    "nodeName": "Aggregator-01",
+    "database": {
+      "host": "192.0.2.20",
+      "port": 5432,
+      "name": "termidesk_aggr",
+      "user": "termideskdb",
+      "password": ""
+    },
+    "mappingYaml": "/etc/opt/termidesk-vdi/mapping.yaml",
+    "jwtCertPath": "",
+    "jwtKeyPath": ""
+  },
+  "monitoring": {
+    "healthCheckAccessKey": "",
+    "metricsAccessKey": "",
+    "zabbixTemplate": true,
+    "zabbixServer": "zabbix.termidesk.local",
+    "celeryBeatPort": 8103,
+    "celeryWorkerPort": 8104
+  },
+  "backup": {
+    "schedule": "0 2 * * *",
+    "backupDir": "/var/backups/termidesk",
+    "retentionDays": 14,
+    "includeConfig": true,
+    "includeDatabase": true
+  },
+  "logging": {
+    "logAddress": "/dev/log",
+    "logFacility": "local3",
+    "logDir": "/var/log/termidesk",
+    "logLevel": "INFO",
+    "logDeep": 14,
+    "fluentdCache": 15,
+    "fluentdTable": "logs",
+    "fluentdTimeout": 5,
+    "syslogHost": "",
+    "syslogPort": 514,
+    "internalAudit": true,
+    "cefEnabled": false
+  }
+}

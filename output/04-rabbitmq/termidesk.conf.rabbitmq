@@ -1,0 +1,1 @@
+RABBITMQ_URL='amqp://admin:<pass>@192.0.2.10:5672/'

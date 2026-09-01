@@ -1,0 +1,3 @@
+# mapping.yaml — сопоставление NODE_NAME и FQDN
+Dispatcher-01: disp1.termidesk.local
+Dispatcher-02: disp2.termidesk.local

@@ -1,0 +1,1 @@
+Документация: https://termidesk.ru/docs/ru-termidesk-doc/v7.0/documentation/termidesk-install/install-delete/prepare-environment.html

@@ -1,0 +1,8 @@
+# gateway.yaml — Termidesk Connect / Шлюз
+coordinatorUrl: amqp://admin@192.0.2.10:5672/
+coordinatorUser: admin
+coordinatorPass: 
+coordinatorTimeout: 30
+coordinatorRefreshTime: 60
+healthCheckURL: /api/health
+listenPort: 5099

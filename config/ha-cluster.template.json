@@ -1,0 +1,176 @@
+{
+  "version": "7.0",
+  "_template": "ha-cluster.template.json — скопируйте в свой файл, заполните все __ЗАПОЛНИТЕ__ и пустые обязательные поля. Гайд: ГАЙД-ШАБЛОН-JSON.html",
+  "portal": {
+    "url": "https://__ЗАПОЛНИТЕ_FQDN_ПОРТАЛА__",
+    "adminUser": "__ЗАПОЛНИТЕ__",
+    "adminPassword": "__ЗАПОЛНИТЕ__",
+    "verifySsl": false
+  },
+  "ssh": {
+    "user": "__ЗАПОЛНИТЕ__",
+    "port": 22,
+    "keyPath": ""
+  },
+  "environment": {
+    "domain": "__ЗАПОЛНИТЕ_ДОМЕН__",
+    "ntpServer": "__ЗАПОЛНИТЕ_NTP__",
+    "termideskRepo": "__ЗАПОЛНИТЕ_URL_РЕПО_TERMIDESK__",
+    "astraRepo": ""
+  },
+  "cluster": {
+    "deploymentType": "standard",
+    "secretsStorage": "config",
+    "referenceNode": {
+      "name": "__ЗАПОЛНИТЕ_NODE_NAME_ЭТАЛОН__",
+      "fqdn": "__ЗАПОЛНИТЕ_FQDN__",
+      "ip": "__ЗАПОЛНИТЕ_IP__"
+    },
+    "dispatchers": [
+      {
+        "name": "__ЗАПОЛНИТЕ_NODE_NAME_ЭТАЛОН__",
+        "fqdn": "__ЗАПОЛНИТЕ_FQDN__",
+        "ip": "__ЗАПОЛНИТЕ_IP__",
+        "isReference": true
+      },
+      {
+        "name": "__ЗАПОЛНИТЕ_NODE_NAME_2__",
+        "fqdn": "__ЗАПОЛНИТЕ_FQDN_2__",
+        "ip": "__ЗАПОЛНИТЕ_IP_2__",
+        "isReference": false
+      }
+    ],
+    "celeryManagers": [
+      {
+        "name": "__ЗАПОЛНИТЕ_CELERY_1__",
+        "fqdn": "__ЗАПОЛНИТЕ_FQDN__",
+        "ip": "__ЗАПОЛНИТЕ_IP__"
+      },
+      {
+        "name": "__ЗАПОЛНИТЕ_CELERY_2__",
+        "fqdn": "__ЗАПОЛНИТЕ_FQDN__",
+        "ip": "__ЗАПОЛНИТЕ_IP__"
+      }
+    ],
+    "gateways": [
+      {
+        "name": "__ЗАПОЛНИТЕ_GW_1__",
+        "fqdn": "__ЗАПОЛНИТЕ_FQDN__",
+        "ip": "__ЗАПОЛНИТЕ_IP__",
+        "port": 5099
+      },
+      {
+        "name": "__ЗАПОЛНИТЕ_GW_2__",
+        "fqdn": "__ЗАПОЛНИТЕ_FQDN__",
+        "ip": "__ЗАПОЛНИТЕ_IP__",
+        "port": 5099
+      }
+    ],
+    "loadBalancers": {
+      "fqdn": "__ЗАПОЛНИТЕ_VIP_FQDN__",
+      "vip": "",
+      "useSelfSignedCert": false,
+      "nodes": [
+        {
+          "name": "__ЗАПОЛНИТЕ_LB_1__",
+          "fqdn": "__ЗАПОЛНИТЕ_FQDN__",
+          "ip": "__ЗАПОЛНИТЕ_IP__"
+        }
+      ]
+    },
+    "nginx": {
+      "listenHttp": "0.0.0.0:80",
+      "listenHttps": "0.0.0.0:443 ssl",
+      "dispatcherPort": 443,
+      "proxyTimeout": 1000,
+      "snippetsDir": "/etc/nginx/snippets",
+      "sitesAvailableDir": "/etc/nginx/sites-available",
+      "sitesEnabledDir": "/etc/nginx/sites-enabled",
+      "sslSnippetCert": "snippets/ssl-cert.conf",
+      "sslSnippetParams": "snippets/ssl-params.conf"
+    },
+    "tls": {
+      "mode": "provided",
+      "certPath": "/etc/ssl/certs/__ЗАПОЛНИТЕ__.crt",
+      "keyPath": "/etc/ssl/private/__ЗАПОЛНИТЕ__.key",
+      "dhparamPath": "/etc/nginx/dhparam.pem",
+      "certDays": 365,
+      "certKeySize": 2048,
+      "certSubject": "__ЗАПОЛНИТЕ_VIP_FQDN__",
+      "sslProtocols": "TLSv1.3 TLSv1.2",
+      "sslCiphers": "ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384",
+      "sslEcdhCurve": "secp384r1",
+      "sslSessionTimeout": "10m",
+      "sslSessionCacheSize": "10m",
+      "sslStapling": "on",
+      "sslStaplingVerify": "on",
+      "dnsResolverPrimary": "__ЗАПОЛНИТЕ_DNS_1__",
+      "dnsResolverSecondary": "",
+      "dnsResolverValid": 300,
+      "dnsResolverTimeout": 5
+    }
+  },
+  "database": {
+    "clusterMode": "cluster",
+    "host1": "__ЗАПОЛНИТЕ_IP_ИЛИ_FQDN__",
+    "host2": "",
+    "host3": "",
+    "port": 5432,
+    "name": "__ЗАПОЛНИТЕ__",
+    "user": "__ЗАПОЛНИТЕ__",
+    "password": "__ЗАПОЛНИТЕ__",
+    "pgHbaNetwork": "__ЗАПОЛНИТЕ_CIDR__",
+    "maxConnections": 100,
+    "ssl": false
+  },
+  "rabbitmq": {
+    "brokerType": "rabbitmq",
+    "host": "__ЗАПОЛНИТЕ_IP_ИЛИ_FQDN__",
+    "port": 5672,
+    "managementPort": 15672,
+    "user": "__ЗАПОЛНИТЕ__",
+    "password": "__ЗАПОЛНИТЕ__",
+    "vhost": "/",
+    "ssl": false
+  },
+  "openbao": {
+    "enabled": false,
+    "url": "",
+    "kvVersion": "2",
+    "tokenPath": "",
+    "roleName": "",
+    "roleId": "",
+    "dbPath": "",
+    "rabbitmqPath": "",
+    "termideskPath": "",
+    "cacheLifetime": 300,
+    "namespace": ""
+  },
+  "dispatcher": {
+    "nodeRoles": "ADMIN,USER",
+    "nodeName": "__ЗАПОЛНИТЕ_NODE_NAME_ЭТАЛОН__",
+    "farmMode": "dispatcher"
+  },
+  "celery": {
+    "nodeRoles": "CELERYMAN",
+    "beatHealthCheckPort": 8103,
+    "workerHealthCheckPort": 8104,
+    "beatHealthCheckIp": "",
+    "workerHealthCheckIp": "",
+    "primaryCheckInterval": 3,
+    "primaryLockTimeout": 45
+  },
+  "gateway": {
+    "coordinatorUrl": "amqp://__ЗАПОЛНИТЕ_USER__@__ЗАПОЛНИТЕ_RABBIT_HOST__:5672/",
+    "coordinatorUser": "__ЗАПОЛНИТЕ__",
+    "coordinatorPass": "__ЗАПОЛНИТЕ__",
+    "coordinatorTimeout": 30,
+    "coordinatorRefreshTime": 60,
+    "healthCheckPath": "/api/health",
+    "listenPort": 5099
+  },
+  "monitoring": {
+    "healthCheckAccessKey": "__ЗАПОЛНИТЕ__",
+    "metricsAccessKey": ""
+  }
+}

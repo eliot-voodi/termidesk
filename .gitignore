@@ -1,0 +1,11 @@
+# Локальные конфиги с паролями и ключами (используйте *.example.json / ha-cluster.template.json)
+config/termidesk-settings.json
+config/cluster-config.json
+config/my-ha-cluster.json
+config/*-local.json
+
+# Служебные файлы
+*.log
+*.tmp
+.DS_Store
+Thumbs.db

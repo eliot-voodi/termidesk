@@ -1,0 +1,89 @@
+﻿<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>8. Чек-лист заполнения</title><style>:root{--text:#e7ecf3;--muted:#9aa7b8;--accent:#3d8bfd;--accent2:#2bb673;--border:#2a3548;--code:#0b1220;--th:#243044;--panel:#1a2332}*{box-sizing:border-box}body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;background:#0f1419;color:var(--text);line-height:1.55}a{color:var(--accent)}.layout{display:grid;grid-template-columns:280px 1fr;min-height:100vh}.sidebar{position:sticky;top:0;height:100vh;overflow:auto;background:#121820;border-right:1px solid var(--border);padding:1.2rem}.toc{list-style:none;padding:0}.toc a{display:block;padding:.25rem .4rem;color:var(--muted);font-size:.85rem;text-decoration:none}.toc a:hover{color:#fff}.main{padding:2rem 2.5rem 4rem;max-width:980px}.hero{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:1.4rem;margin-bottom:1.2rem}.badge{display:inline-block;background:rgba(43,182,115,.15);color:var(--accent2);border:1px solid rgba(43,182,115,.35);padding:.15rem .5rem;border-radius:999px;font-size:.75rem}h2{border-top:1px solid var(--border);padding-top:.5rem;margin-top:2rem}h3,h4{color:#d7e3f4}code{font-family:Consolas,monospace;background:rgba(255,255,255,.06);padding:.1rem .35rem;border-radius:4px}pre{background:var(--code);border:1px solid var(--border);border-radius:10px;padding:1rem;overflow:auto}pre code{background:none;padding:0;color:#cde3ff}.table-wrap{overflow:auto;margin:1rem 0;border:1px solid var(--border);border-radius:10px}table{width:100%;border-collapse:collapse;font-size:.92rem}th,td{padding:.5rem .7rem;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}th{background:var(--th)}.checklist{list-style:none;padding-left:0}.navdocs a{margin-right:1rem;font-size:.9rem}@media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{position:relative;height:auto}}</style></head><body><div class="layout"><aside class="sidebar"><div class="badge">JSON Template</div><h1 style="font-size:1rem;color:#fff">Оглавление</h1><ol class="toc"><li class="toc-h1"><a href="#гайд-заполнение-json-шаблона-ha-кластера">Гайд: заполнение JSON-шаблона HA-кластера</a></li>
+<li class="toc-h2"><a href="#1-зачем-это-нужно">1. Зачем это нужно</a></li>
+<li class="toc-h2"><a href="#2-быстрый-старт">2. Быстрый старт</a></li>
+<li class="toc-h2"><a href="#3-параметры-командной-строки">3. Параметры командной строки</a></li>
+<li class="toc-h2"><a href="#4-как-заполнять-секции-шаблона">4. Как заполнять секции шаблона</a></li>
+<li class="toc-h2"><a href="#5-проверка-перед-генерацией">5. Проверка перед генерацией</a></li>
+<li class="toc-h2"><a href="#6-что-получается-после--generateha">6. Что получается после `-GenerateHa`</a></li>
+<li class="toc-h2"><a href="#7-связь-файлов">7. Связь файлов</a></li>
+<li class="toc-h2"><a href="#8-чек-лист-заполнения">8. Чек-лист заполнения</a></li>
+</ol><div class="navdocs"><a href="ИНСТРУКЦИЯ.html">Панель</a><a href="НАСТРОЙКА-КЛАСТЕРА.html">Кластер</a><a href="ГАЙД-ШАБЛОН-JSON.html">JSON</a></div></aside><main class="main"><div class="hero"><div class="badge">HTML</div><h1>8. Чек-лист заполнения</h1></div><h1 id="гайд-заполнение-json-шаблона-ha-кластера">Гайд: заполнение JSON-шаблона HA-кластера</h1>
+<hr>
+<h2 id="1-зачем-это-нужно">1. Зачем это нужно</h2>
+<ol>
+<li>Скопировать шаблон.</li>
+<li>Заполнить все поля <code>__ЗАПОЛНИТЕ__</code> в редакторе.</li>
+<li>Запустить панель с этим JSON — скрипты HA сгенерируются сразу.</li>
+<hr>
+<h2 id="2-быстрый-старт">2. Быстрый старт</h2>
+<h3 id="шаг-a-копия-шаблона">Шаг A — копия шаблона</h3>
+<pre><code>cd C:\path\to\termidesk
+Copy-Item .\config\ha-cluster.template.json .\config\my-ha-cluster.json
+notepad .\config\my-ha-cluster.json</code></pre>
+<h3 id="шаг-b-заполнить-файл">Шаг B — заполнить файл</h3>
+<h3 id="шаг-c-запуск-с-предзаполненным-json">Шаг C — запуск с предзаполненным JSON</h3>
+<pre><code>.\Start-TermideskMenu.ps1 -SettingsFile .\config\my-ha-cluster.json -HaWizard -Force</code></pre>
+<pre><code>.\Start-TermideskMenu.ps1 -SettingsFile .\config\my-ha-cluster.json -GenerateHa -HaWizard -Force</code></pre>
+<pre><code>.\Start-TermideskMenu.ps1 -SettingsFile .\config\my-ha-cluster.json -GenerateHa -SkipMenu -Force</code></pre>
+<li><code>.\Start-TermideskMenu.ps1</code></li>
+<li><strong>[18] → [4]</strong> — загрузить JSON</li>
+<li><strong>[3]</strong> — сгенерировать скрипты</li>
+<li>Шаги развёртывания <strong>1…9</strong></li>
+<hr>
+<h2 id="3-параметры-командной-строки">3. Параметры командной строки</h2>
+<hr>
+<h2 id="4-как-заполнять-секции-шаблона">4. Как заполнять секции шаблона</h2>
+<h3 id="41-environment">4.1. <code>environment</code></h3>
+<h3 id="42-ssh">4.2. <code>ssh</code></h3>
+<h3 id="43-portal">4.3. <code>portal</code></h3>
+<h3 id="44-database">4.4. <code>database</code></h3>
+<h3 id="45-rabbitmq">4.5. <code>rabbitmq</code></h3>
+<h3 id="46-clusterdeploymenttype">4.6. <code>cluster.deploymentType</code></h3>
+<ul>
+<li><code>standard</code> — нужны <code>celeryManagers</code> (≥ 2)</li>
+<li><code>minimal</code> — Celery на диспетчерах; <code>dispatcher.nodeRoles</code> = <code>ADMIN,USER,CELERYMAN</code>, массив celery можно оставить пустым <code>[]</code></li>
+<h3 id="47-узлы-dispatchers-celerymanagers-gateways-loadbalancersnodes">4.7. Узлы: <code>dispatchers</code>, <code>celeryManagers</code>, <code>gateways</code>, <code>loadBalancers.nodes</code></h3>
+<h3 id="48-clustertls-пути-только-linux">4.8. <code>cluster.tls</code> (пути только Linux!)</h3>
+<h3 id="49-clusternginx">4.9. <code>cluster.nginx</code></h3>
+<li><code>listenHttp</code>: <code>0.0.0.0:80</code></li>
+<li><code>listenHttps</code>: <code>0.0.0.0:443 ssl</code> (слово <code>ssl</code> уже внутри значения)</li>
+<li><code>dispatcherPort</code>: <code>443</code></li>
+<li><code>proxyTimeout</code>: <code>1000</code></li>
+<li>каталоги snippets — стандартные для nginx на Astra/Debian</li>
+<h3 id="410-gateway">4.10. <code>gateway</code></h3>
+<h3 id="411-monitoring">4.11. <code>monitoring</code></h3>
+<h3 id="412-openbao">4.12. <code>openbao</code></h3>
+<hr>
+<h2 id="5-проверка-перед-генерацией">5. Проверка перед генерацией</h2>
+<pre><code>.\Start-TermideskMenu.ps1 -SettingsFile .\config\my-ha-cluster.json -Force -SkipMenu
+# затем в другой сессии меню [18]→[4]→[3]
+# или сразу:
+.\Start-TermideskMenu.ps1 -SettingsFile .\config\my-ha-cluster.json -GenerateHa -SkipMenu -Force</code></pre>
+<li>лишняя запятая после последнего элемента в объекте/массиве;</li>
+<li>незакрытая кавычка;</li>
+<li>одинарные кавычки вместо двойных;</li>
+<li>комментарии <code>//</code> — в JSON нельзя.</li>
+<pre><code>Get-Content .\config\my-ha-cluster.json -Raw -Encoding UTF8 | ConvertFrom-Json | Out-Null
+Write-Host 'JSON OK'</code></pre>
+<hr>
+<h2 id="6-что-получается-после--generateha">6. Что получается после <code>-GenerateHa</code></h2>
+<li><code>01</code>…<code>08</code> — shell-скрипты и гайды</li>
+<li><code>09-healthcheck.ps1</code></li>
+<li><code>nginx-site.conf</code>, <code>termidesk.conf.snippet</code>, <code>README-deploy-order.txt</code></li>
+<hr>
+<h2 id="7-связь-файлов">7. Связь файлов</h2>
+<hr>
+<h2 id="8-чек-лист-заполнения">8. Чек-лист заполнения</h2>
+<li><label><input type="checkbox" disabled> Скопирован шаблон, оригинал не испорчен</label></li>
+<li><label><input type="checkbox" disabled> Нет строк <code>__ЗАПОЛНИТЕ</code></label></li>
+<li><label><input type="checkbox" disabled> ≥ 2 диспетчера, один <code>isReference: true</code></label></li>
+<li><label><input type="checkbox" disabled> ≥ 2 шлюза; при standard ≥ 2 CeleryMan</label></li>
+<li><label><input type="checkbox" disabled> ≥ 1 узел LB + VIP FQDN</label></li>
+<li><label><input type="checkbox" disabled> Пути TLS — Linux (<code>/etc/...</code>), не <code>C:\</code></label></li>
+<li><label><input type="checkbox" disabled> <code>dhparamPath</code> = <code>/etc/nginx/dhparam.pem</code> (файл создадите на LB)</label></li>
+<li><label><input type="checkbox" disabled> Пароли БД, RabbitMQ, portal, gateway заданы</label></li>
+<li><label><input type="checkbox" disabled> <code>pgHbaNetwork</code> — ваш CIDR</label></li>
+<li><label><input type="checkbox" disabled> JSON парсится (<code>ConvertFrom-Json</code>)</label></li>
+<li><label><input type="checkbox" disabled> Запуск с <code>-SettingsFile</code> и <code>-GenerateHa</code> успешен</label></li>
+<hr>
+</main></div></body></html>

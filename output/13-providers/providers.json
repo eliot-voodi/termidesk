@@ -1,0 +1,9 @@
+{
+    "name":  "oVirt Provider",
+    "type":  "oVirt",
+    "host":  "ovirt.termidesk.local",
+    "port":  443,
+    "username":  "admin@internal",
+    "password":  "",
+    "verifySsl":  false
+}

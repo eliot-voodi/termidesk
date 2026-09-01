@@ -1,0 +1,9 @@
+{
+    "name":  "VDI Pool 01",
+    "providerName":  "oVirt Provider",
+    "templateName":  "Win11-VDI-Template",
+    "maxDesktops":  10,
+    "minDesktops":  2,
+    "protocol":  "TERA",
+    "network":  "default"
+}

@@ -1,0 +1,1 @@
+OpenBao HA обязателен для отказоустойчивости. Док: https://termidesk.ru/docs/ru-termidesk-doc/v7.0/documentation/termidesk-settings/settings/openbao.html

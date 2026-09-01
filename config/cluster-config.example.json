@@ -1,0 +1,52 @@
+{
+  "version": "7.0",
+  "deploymentType": "standard",
+  "domain": "termidesk.local",
+  "secretsStorage": "config",
+  "database": {
+    "clusterMode": "cluster",
+    "host1": "192.0.2.10",
+    "host2": "192.0.2.11",
+    "host3": "192.0.2.12",
+    "port": 5432,
+    "name": "termidesk",
+    "user": "termideskdb",
+    "password": ""
+  },
+  "rabbitmq": {
+    "host": "192.0.2.10",
+    "port": 5672,
+    "user": "admin",
+    "password": "",
+    "vhost": "/"
+  },
+  "dispatchers": [
+    { "name": "Dispatcher-01", "fqdn": "disp1.termidesk.local", "ip": "192.0.2.30" },
+    { "name": "Dispatcher-02", "fqdn": "disp2.termidesk.local", "ip": "192.0.2.31" }
+  ],
+  "celeryManagers": [
+    { "name": "CeleryMan-01", "fqdn": "tsk1.termidesk.local", "ip": "192.0.2.40" },
+    { "name": "CeleryMan-02", "fqdn": "tsk2.termidesk.local", "ip": "192.0.2.41" }
+  ],
+  "gateways": [
+    { "name": "Gateway-01", "fqdn": "tdc-gw1.termidesk.local", "ip": "192.0.2.50", "port": 5099 },
+    { "name": "Gateway-02", "fqdn": "tdc-gw2.termidesk.local", "ip": "192.0.2.51", "port": 5099 }
+  ],
+  "loadBalancers": {
+    "fqdn": "portal.termidesk.local",
+    "useSelfSignedCert": true,
+    "nginxNodes": [
+      { "name": "LB-01", "ip": "192.0.2.60" },
+      { "name": "LB-02", "ip": "192.0.2.61" }
+    ]
+  },
+  "ssh": {
+    "user": "admin",
+    "port": 22,
+    "keyPath": ""
+  },
+  "referenceNode": {
+    "name": "Dispatcher-01",
+    "ip": "192.0.2.30"
+  }
+}

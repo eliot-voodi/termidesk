@@ -1,0 +1,40 @@
+upstream daas-upstream-ws {
+ least_conn;
+{{GATEWAY_UPSTREAMS}}
+}
+
+upstream daas-upstream-nodes {
+ least_conn;
+{{DISPATCHER_UPSTREAMS}}
+}
+
+server {
+ listen {{LISTEN_HTTP}};
+ listen {{LISTEN_HTTPS}};
+
+  include {{SSL_SNIPPET_CERT}};
+  include {{SSL_SNIPPET_PARAMS}};
+
+ location /websockify {
+        proxy_http_version 1.1;
+        proxy_pass http://daas-upstream-ws/;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_connect_timeout {{PROXY_TIMEOUT}};
+        proxy_send_timeout {{PROXY_TIMEOUT}};
+        proxy_read_timeout {{PROXY_TIMEOUT}};
+        send_timeout {{PROXY_TIMEOUT}};
+
+        proxy_buffering off;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+ }
+
+ location / {
+        proxy_pass https://daas-upstream-nodes/;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+ }
+}

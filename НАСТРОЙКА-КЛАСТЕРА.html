@@ -1,0 +1,255 @@
+﻿<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>K. Где лежат артефакты</title><style>:root{--text:#e7ecf3;--muted:#9aa7b8;--accent:#3d8bfd;--accent2:#2bb673;--border:#2a3548;--code:#0b1220;--th:#243044;--panel:#1a2332}*{box-sizing:border-box}body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;background:#0f1419;color:var(--text);line-height:1.55}a{color:var(--accent)}.layout{display:grid;grid-template-columns:280px 1fr;min-height:100vh}.sidebar{position:sticky;top:0;height:100vh;overflow:auto;background:#121820;border-right:1px solid var(--border);padding:1.2rem}.toc{list-style:none;padding:0}.toc a{display:block;padding:.25rem .4rem;color:var(--muted);font-size:.85rem;text-decoration:none}.toc a:hover{color:#fff}.main{padding:2rem 2.5rem 4rem;max-width:980px}.hero{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:1.4rem;margin-bottom:1.2rem}.badge{display:inline-block;background:rgba(43,182,115,.15);color:var(--accent2);border:1px solid rgba(43,182,115,.35);padding:.15rem .5rem;border-radius:999px;font-size:.75rem}h2{border-top:1px solid var(--border);padding-top:.5rem;margin-top:2rem}h3,h4{color:#d7e3f4}code{font-family:Consolas,monospace;background:rgba(255,255,255,.06);padding:.1rem .35rem;border-radius:4px}pre{background:var(--code);border:1px solid var(--border);border-radius:10px;padding:1rem;overflow:auto}pre code{background:none;padding:0;color:#cde3ff}.table-wrap{overflow:auto;margin:1rem 0;border:1px solid var(--border);border-radius:10px}table{width:100%;border-collapse:collapse;font-size:.92rem}th,td{padding:.5rem .7rem;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}th{background:var(--th)}.checklist{list-style:none;padding-left:0}.navdocs a{margin-right:1rem;font-size:.9rem}@media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{position:relative;height:auto}}</style></head><body><div class="layout"><aside class="sidebar"><div class="badge">HA Guide</div><h1 style="font-size:1rem;color:#fff">Оглавление</h1><ol class="toc"><li class="toc-h1"><a href="#полная-настройка-отказоустойчивого-кластера-termidesk-vdi-70">Полная настройка отказоустойчивого кластера Termidesk VDI 7.0</a></li>
+<li class="toc-h2"><a href="#a-что-вы-получите-в-итоге">A. Что вы получите в итоге</a></li>
+<li class="toc-h2"><a href="#b-перед-началом-проектирование-обязательно">B. Перед началом: проектирование (обязательно)</a></li>
+<li class="toc-h2"><a href="#c-подготовка-windows-станции-администратора">C. Подготовка Windows-станции администратора</a></li>
+<li class="toc-h2"><a href="#d-подготовка-linux-узлов-до-панели-или-шаг-1">D. Подготовка Linux-узлов (до панели или шаг 1)</a></li>
+<li class="toc-h2"><a href="#e-работа-в-панели-сбор-параметров">E. Работа в панели: сбор параметров</a></li>
+<li class="toc-h2"><a href="#f-пошаговое-развёртывание-выполнение">F. Пошаговое развёртывание (выполнение)</a></li>
+<li class="toc-h2"><a href="#g-после-кластера-vdi-и-эксплуатация">G. После кластера: VDI и эксплуатация</a></li>
+<li class="toc-h2"><a href="#h-порты-ориентир">H. Порты (ориентир)</a></li>
+<li class="toc-h2"><a href="#i-типичные-стоп-факторы">I. Типичные стоп-факторы</a></li>
+<li class="toc-h2"><a href="#j-краткая-шпаргалка-одного-экрана">J. Краткая «шпаргалка одного экрана»</a></li>
+<li class="toc-h2"><a href="#k-где-лежат-артефакты">K. Где лежат артефакты</a></li>
+</ol><div class="navdocs"><a href="ИНСТРУКЦИЯ.html">Панель</a><a href="НАСТРОЙКА-КЛАСТЕРА.html">Кластер</a><a href="ГАЙД-ШАБЛОН-JSON.html">JSON</a></div></aside><main class="main"><div class="hero"><div class="badge">HTML</div><h1>K. Где лежат артефакты</h1></div><h1 id="полная-настройка-отказоустойчивого-кластера-termidesk-vdi-70">Полная настройка отказоустойчивого кластера Termidesk VDI 7.0</h1>
+<hr>
+<h2 id="a-что-вы-получите-в-итоге">A. Что вы получите в итоге</h2>
+<ol>
+<li>Общая БД PostgreSQL (режим <code>DB_CLUSTER_MODE=cluster</code> в Termidesk).</li>
+<li>Брокер RabbitMQ (очереди задач и регистрация шлюзов).</li>
+<li>≥ 2 Универсальных диспетчера (портал/API), один — <strong>эталон</strong>.</li>
+<li>≥ 2 Менеджера рабочих мест CeleryMan (в типе <strong>standard</strong> — отдельные узлы).</li>
+<li>≥ 2 шлюза Termidesk Connect (websockify).</li>
+<li>Балансировщик nginx с VIP FQDN для пользователей.</li>
+<li>Единый <code>termidesk-settings.json</code> и скрипты в <code>output/18-ha-wizard/</code>.</li>
+<hr>
+<h2 id="b-перед-началом-проектирование-обязательно">B. Перед началом: проектирование (обязательно)</h2>
+<ul>
+<li>DNS-домен (например <code>corp.example.ru</code>)</li>
+<li>NTP-сервер</li>
+<li>URL репозитория Termidesk 7.0</li>
+<li>Пароли: БД, RabbitMQ, admin портала, SSH</li>
+<li>Сертификат VIP (корпоративный) <strong>или</strong> решение использовать self-signed на стенде</li>
+<li>CIDR сети приложений для <code>pg_hba.conf</code> (например <code>10.10.0.0/24</code>)</li>
+<li>DNS-резолверы для nginx <code>ssl_stapling</code> (внутренние DNS)</li>
+<h3 id="выбор-типа-развёртывания">Выбор типа развёртывания</h3>
+<hr>
+<h2 id="c-подготовка-windows-станции-администратора">C. Подготовка Windows-станции администратора</h2>
+<ol>
+<li>Скопируйте каталог <code>termidesk</code> <strong>целиком</strong> (файлы <code>.ps1</code>/<code>.psm1</code> должны быть UTF-8 <strong>с BOM</strong>).</li>
+<li>Установите OpenSSH Client (<code>ssh</code>, <code>scp</code> в PATH).</li>
+<li>Разрешите скрипты при необходимости:</li>
+<pre><code>Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</code></pre>
+<li>Проверьте доступ к каждому Linux-узлу:</li>
+<pre><code>ssh -p 22 USER@IP "hostname; sudo -n true || sudo -v; timedatectl || date"</code></pre>
+<li>Запустите панель:</li>
+<pre><code>cd C:\path\to\termidesk
+.\Start-TermideskMenu.ps1</code></pre>
+<li>Откройте справку: меню <strong>[H]</strong> → HTML-инструкция; этот документ — <code>НАСТРОЙКА-КЛАСТЕРА.html</code>.</li>
+<hr>
+<h2 id="d-подготовка-linux-узлов-до-панели-или-шаг-1">D. Подготовка Linux-узлов (до панели или шаг 1)</h2>
+<li>Установить поддерживаемую ОС (Astra Linux и т.п. по матрице Termidesk 7.0).</li>
+<li>Задать hostname = короткое имя; прописать FQDN в DNS или <code>/etc/hosts</code> на всех узлах.</li>
+<li>Создать пользователя SSH с <code>sudo</code>.</li>
+<li>Открыть firewall между ролями (см. раздел портов ниже).</li>
+<li>Обеспечить доступ к репозиторию Termidesk и обновлениям ОС.</li>
+<ul class="checklist">
+<li><label><input type="checkbox" disabled> Клиенты → VIP:443 (и :80 при редиректе)</label></li>
+<li><label><input type="checkbox" disabled> LB → диспетчеры:443 (или ваш порт HTTPS)</label></li>
+<li><label><input type="checkbox" disabled> LB → шлюзы:websockify (часто 5099)</label></li>
+<li><label><input type="checkbox" disabled> Диспетчеры/Celery → PostgreSQL:5432</label></li>
+<li><label><input type="checkbox" disabled> Диспетчеры/Celery/шлюзы → RabbitMQ:5672</label></li>
+<li><label><input type="checkbox" disabled> Админ → все узлы:22</label></li>
+<li><label><input type="checkbox" disabled> NTP доступен со всех узлов</label></li>
+<hr>
+<h2 id="e-работа-в-панели-сбор-параметров">E. Работа в панели: сбор параметров</h2>
+<h3 id="e1-вход-в-мастер">E.1. Вход в мастер</h3>
+<h3 id="e2-что-вводить-на-каждом-этапе-мастера">E.2. Что вводить на каждом этапе мастера</h3>
+<h4 id="1-тип-развёртывания">1) Тип развёртывания</h4>
+<li><code>1</code> — standard  </li>
+<li><code>2</code> — minimal  </li>
+<h4 id="2-общие-параметры">2) Общие параметры</h4>
+<h4 id="3-ssh">3) SSH</h4>
+<h4 id="4-postgresql">4) PostgreSQL</h4>
+<h4 id="5-rabbitmq">5) RabbitMQ</h4>
+<h4 id="6-openbao">6) OpenBao</h4>
+<li>Если секреты в конфигах — ответьте <strong>N</strong>.</li>
+<li>Если OpenBao уже есть — <strong>Y</strong> и заполните URL, KV, AppRole, пути секретов.</li>
+<h4 id="7-tls-балансировщика">7) TLS балансировщика</h4>
+<h4 id="что-спрашивает-мастер-и-что-отвечать">Что спрашивает мастер и что отвечать</h4>
+<h4 id="вопрос-путь-к-dhparampem-что-он-от-вас-хочет">Вопрос «Путь к dhparam.pem» — что он от вас хочет</h4>
+<pre><code>/etc/nginx/dhparam.pem</code></pre>
+<h4 id="как-сделать-файл-dhparampem">Как сделать файл dhparam.pem</h4>
+<ol>
+<li>Подключитесь по SSH к балансировщику:</li>
+<pre><code>ssh USER@IP_БАЛАНСИРОВЩИКА</code></pre>
+<li>Создайте каталог (если нужно) и сгенерируйте файл:</li>
+<pre><code>sudo mkdir -p /etc/nginx
+sudo openssl dhparam -out /etc/nginx/dhparam.pem 4096</code></pre>
+<li>Дождитесь окончания. Генерация <strong>4096 бит</strong> может занять <strong>от нескольких минут до 15–20+ минут</strong> — это нормально, не прерывайте.</li>
+<li>Проверьте, что файл появился и не пустой:</li>
+<pre><code>ls -lh /etc/nginx/dhparam.pem
+sudo head -n 2 /etc/nginx/dhparam.pem</code></pre>
+<li>Права (по желанию, только root читает ключ-подобные файлы):</li>
+<pre><code>sudo chmod 644 /etc/nginx/dhparam.pem</code></pre>
+<li>В мастере <strong>[18]</strong> на вопрос «Путь к dhparam.pem» укажите <code>/etc/nginx/dhparam.pem</code>.</li>
+<li>На шаге развёртывания nginx (<strong>[18] → 8</strong>) скрипт <code>08-nginx-lb-setup.sh</code> сам выполнит <code>openssl dhparam</code>, <strong>если файла ещё нет</strong>.</li>
+<li>Учтите: шаг nginx «зависнет» на генерации на то же долгое время — это ожидаемо.</li>
+<pre><code>sudo openssl dhparam -out /etc/nginx/dhparam.pem 2048</code></pre>
+<pre><code>sudo apt update
+sudo apt install -y openssl</code></pre>
+<h4 id="частая-ошибка-пути-windows">Частая ошибка: пути Windows</h4>
+<pre><code>C:\_Scripts\SSL\certs\something.crt</code></pre>
+<h4 id="8-диспетчеры">8) Диспетчеры</h4>
+<li>Число ≥ 2.</li>
+<li><code>NODE_ROLES</code>: standard → <code>ADMIN,USER</code>; minimal → <code>ADMIN,USER,CELERYMAN</code>.</li>
+<li>Для каждого: NODE_NAME, FQDN, IP. <strong>Первый = эталон.</strong></li>
+<li>URL портала (можно <code>https://эталон-FQDN</code>), логин/пароль admin.</li>
+<h4 id="9-celeryman-только-standard">9) CeleryMan (только standard)</h4>
+<h4 id="10-шлюзы">10) Шлюзы</h4>
+<h4 id="11-nginx-lb">11) nginx / LB</h4>
+<h4 id="12-health-check">12) Health Check</h4>
+<h3 id="e3-сводка">E.3. Сводка</h3>
+<ul>
+<li><code>config/termidesk-settings.json</code></li>
+<li><code>config/cluster-config.json</code></li>
+<li>файлы в <code>output/18-ha-wizard/</code></li>
+<li>обнулит прогресс в <code>ha-wizard-state.json</code></li>
+<hr>
+<h2 id="f-пошаговое-развёртывание-выполнение">F. Пошаговое развёртывание (выполнение)</h2>
+<hr>
+<h3 id="шаг-1-подготовка-среды-01-prepare-environmentsh">Шаг 1. Подготовка среды (<code>01-prepare-environment.sh</code>)</h3>
+<li>прописывает NTP;</li>
+<li>добавляет репозиторий Termidesk (и Astra, если задан);</li>
+<li><code>apt update</code>.</li>
+<ol>
+<li>В <strong>[18]</strong> выбрать шаг <strong>1</strong>, подтвердить SSH на целевой IP (или выполнить вручную на каждом узле).</li>
+<li>Повторить для всех узлов кластера (скрипт один — цель меняется).</li>
+<li>Проверить:</li>
+<pre><code>timedatectl status   # или date на всех узлах — время совпадает
+apt-cache policy termidesk-vdi</code></pre>
+<hr>
+<h3 id="шаг-2-postgresql-02-postgresql-setupsh">Шаг 2. PostgreSQL (<code>02-postgresql-setup.sh</code>)</h3>
+<ul>
+<li>ставит <code>postgresql</code> (если ещё нет);</li>
+<li>создаёт БД и пользователя;</li>
+<li>печатает строку для <code>pg_hba.conf</code>.</li>
+<ol>
+<li>Выполнить шаг <strong>2</strong> на DBHOST.</li>
+<li>Вручную добавить в <code>pg_hba.conf</code> доступ из CIDR приложений (как в мастере), затем <code>reload</code>.</li>
+<li>Если HA БД — настроить репликацию/Patroni по вашей схеме; убедиться, что приложение видит master.</li>
+<li>Проверка с диспетчерской сети:</li>
+<pre><code>psql -h DBHOST -p 5432 -U DBUSER -d DBNAME -c 'SELECT 1'</code></pre>
+<hr>
+<h3 id="шаг-3-rabbitmq-03-rabbitmq-setupsh">Шаг 3. RabbitMQ (<code>03-rabbitmq-setup.sh</code>)</h3>
+<ul>
+<li>ставит <code>rabbitmq-server</code>;</li>
+<li>кладёт конфиги из шаблонов;</li>
+<li>включает management plugin;</li>
+<li>перезапускает сервис.</li>
+<ol>
+<li>Выполнить шаг <strong>3</strong>.</li>
+<li>Создать пользователя/vhost/права, если скрипт не создал их под ваши пароли (сверьте с официальным гайдом и вашими значениями из JSON):</li>
+<pre><code>sudo rabbitmqctl status
+sudo rabbitmqctl list_users
+# при необходимости:
+# sudo rabbitmqctl add_user ...
+# sudo rabbitmqctl set_permissions -p / ...</code></pre>
+<li>Открыть management UI <code>http://RABBIT:15672</code> (если политика ИБ позволяет) и проверить доступ.</li>
+<li>С узлов диспетчера/шлюза проверить TCP 5672.</li>
+<hr>
+<h3 id="шаг-4-первый-диспетчер-эталон-04-dispatcher-referencesh">Шаг 4. Первый диспетчер — эталон (<code>04-dispatcher-reference.sh</code>)</h3>
+<li>Открыть шаг <strong>4</strong> в меню — прочитать инструкцию / выполнить установку пакета.</li>
+<li>На эталоне:</li>
+<pre><code>sudo apt install -y termidesk-vdi
+cd /opt/termidesk/sbin
+sudo ./termidesk-config</code></pre>
+<li>В <code>termidesk-config</code> указать <strong>те же</strong> параметры, что в <code>termidesk-settings.json</code>:</li>
+<ul>
+<li>farm mode / роли / NODE_NAME эталона;</li>
+<li>DB_CLUSTER_MODE, DBHOST…, DBNAME, DBUSER, DBPASS;</li>
+<li>RabbitMQ URL / user / password / vhost;</li>
+<li>secrets storage (config или OpenBao);</li>
+<li>HEALTH_CHECK_ACCESS_KEY.</li>
+<ol>
+<li>Дождаться успешного старта служб:</li>
+<pre><code>systemctl status termidesk-vdi
+# и связанные unit'ы по документации вашей сборки</code></pre>
+<li>Войти в веб-портал по <code>https://эталон-FQDN</code> (или временно по IP) под admin — убедиться, что UI открывается.</li>
+<li>Сохранить каталог конфигурации для копирования на другие диспетчеры:</li>
+<pre><code># с эталона (пример из гайда панели)
+sudo tar czf /tmp/termidesk-vdi-etc.tgz -C /etc/opt termidesk-vdi
+# или scp -r /etc/opt/termidesk-vdi user@other:/home/user/</code></pre>
+<hr>
+<h3 id="шаг-5-дополнительные-диспетчеры-05-dispatcher-additionalsh">Шаг 5. Дополнительные диспетчеры (<code>05-dispatcher-additional.sh</code>)</h3>
+<li>Скопировать <code>/etc/opt/termidesk-vdi</code> с эталона на целевой узел (в home, затем в <code>/etc/opt/</code>).</li>
+<li>Установить пакет <code>termidesk-vdi</code>.</li>
+<li>В конфиге сменить <strong><code>NODE_NAME</code></strong> на уникальное имя этого узла (роли как у диспетчеров).</li>
+<li>Параметры БД и RabbitMQ — <strong>идентичны</strong> эталону (не создавать новую БД).</li>
+<li>Запустить службы, проверить:</li>
+<pre><code>systemctl status termidesk-vdi
+journalctl -u termidesk-vdi -e --no-pager | tail -n 50</code></pre>
+<li>Повторить для всех дополнительных диспетчеров.</li>
+<hr>
+<h3 id="шаг-6-celeryman-06-celery-setupsh-только-standard">Шаг 6. CeleryMan (<code>06-celery-setup.sh</code>) — только standard</h3>
+<li>Скопировать конфиг с эталонного диспетчера (<code>/etc/opt/termidesk-vdi</code>).</li>
+<li>Выполнить скрипт шага <strong>6</strong> (или вручную): положить <code>termidesk-vdi.local</code>, выставить <code>NODE_ROLES=CELERYMAN</code>, установить пакет.</li>
+<li>Уникальный <code>NODE_NAME</code> на каждом CeleryMan.</li>
+<li>Проверить порты health (8103/8104 или ваши) и службы celery beat/worker по документации.</li>
+<li>Повторить на втором (и далее) узле CeleryMan.</li>
+<hr>
+<h3 id="шаг-7-termidesk-connect-шлюзы-07-gateway-setupsh">Шаг 7. Termidesk Connect — шлюзы (<code>07-gateway-setup.sh</code>)</h3>
+<li>Установить Termidesk Connect по официальной инструкции вашей версии.</li>
+<li>Задать:</li>
+<ul>
+<li><code>coordinatorUrl</code>, <code>coordinatorUser</code>, <code>coordinatorPass</code> — как в мастере;</li>
+<li>порт websockify;</li>
+<li><code>healthCheckPath</code>.</li>
+<ol>
+<li>Убедиться, что шлюз зарегистрирован в RabbitMQ и отвечает на health.</li>
+<li>С балансировщика проверить доступность <code>IP:websockify_port</code>.</li>
+<hr>
+<h3 id="шаг-8-балансировщик-nginx-08-nginx-lb-setupsh">Шаг 8. Балансировщик nginx (<code>08-nginx-lb-setup.sh</code>)</h3>
+<ul>
+<li>ставит nginx/openssl;</li>
+<li>генерирует self-signed <strong>или</strong> использует ваши пути сертификатов;</li>
+<li>пишет snippets SSL и site с upstream на диспетчеры и шлюзы;</li>
+<li><code>nginx -t</code> и restart.</li>
+<ol>
+<li>Если режим «существующие файлы» — <strong>заранее</strong> положите cert/key (и при необходимости dhparam) по указанным путям.</li>
+<li>Выполнить шаг <strong>8</strong>.</li>
+<li>Проверить:</li>
+<pre><code>sudo nginx -t
+systemctl status nginx
+curl -kI https://VIP-FQDN/
+# websockify путь зависит от конфигурации клиентов</code></pre>
+<li>DNS: A-запись VIP FQDN → VIP IP (или hosts на клиентах для стенда).</li>
+<li>Если два LB — настройте Keepalived/внешний VIP отдельно; скрипт настраивает nginx на конкретном узле.</li>
+<hr>
+<h3 id="шаг-9-проверка-кластера-09-healthcheckps1">Шаг 9. Проверка кластера (<code>09-healthcheck.ps1</code>)</h3>
+<hr>
+<h2 id="g-после-кластера-vdi-и-эксплуатация">G. После кластера: VDI и эксплуатация</h2>
+<hr>
+<h2 id="h-порты-ориентир">H. Порты (ориентир)</h2>
+<hr>
+<h2 id="i-типичные-стоп-факторы">I. Типичные стоп-факторы</h2>
+<hr>
+<h2 id="j-краткая-шпаргалка-одного-экрана">J. Краткая «шпаргалка одного экрана»</h2>
+<pre><code>Windows:  Start-TermideskMenu.ps1 → [18] → [1]  (собрать всё)
+          [18] → [2]  (проверить JSON)
+          [18] → [3]  (скрипты)
+
+Linux:    [18]→1  NTP+repo на ВСЕ узлы
+          [18]→2  PostgreSQL (+ pg_hba + ваш HA БД)
+          [18]→3  RabbitMQ (+ user/vhost)
+          [18]→4  Эталон: apt + termidesk-config + проверка UI
+          [18]→5  Копия /etc/opt/termidesk-vdi + NODE_NAME на остальных
+          [18]→6  CeleryMan (standard)
+          [18]→7  Шлюзы Connect
+          [18]→8  nginx LB + DNS VIP
+          [18]→9  healthcheck + браузер https://VIP
+
+Далее:    [12] домены → [13] фонды → [15]/[16]/[17] эксплуатация</code></pre>
+<hr>
+<h2 id="k-где-лежат-артефакты">K. Где лежат артефакты</h2>
+<hr>
+</main></div></body></html>

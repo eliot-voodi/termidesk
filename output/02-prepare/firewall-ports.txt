@@ -1,0 +1,8 @@
+# Рекомендуемые порты Termidesk 7.0
+# 443   — Универсальный диспетчер (HTTPS)
+# 5432  — PostgreSQL
+# 5672  — RabbitMQ AMQP / 15672 management
+# 5099  — Termidesk Connect websockify
+# 8103  — Celery beat healthcheck
+# 8104  — Celery worker healthcheck
+# 8200  — OpenBao

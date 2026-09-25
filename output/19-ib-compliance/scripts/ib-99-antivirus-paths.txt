@@ -1,0 +1,5 @@
+# ИБ-99 — пути для исключений антивируса
+/opt/termidesk/
+/etc/opt/termidesk-vdi/
+/var/log/termidesk/
+/tmp/termidesk*

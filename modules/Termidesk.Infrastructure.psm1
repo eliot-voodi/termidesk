@@ -133,6 +133,8 @@ host    $($db.name)    $($db.user)    $($db.pgHbaNetwork)    scram-sha-256
 
     Export-TermideskArtifacts -Section '03-database' -Files @{
         '01-postgresql-setup.sh' = $setup
+        '02-change-password.sh'  = (Get-TermideskPostgresqlPasswordChangeScript -Database $db)
+        'change-password-guide.md' = (Get-TermideskPostgresqlPasswordChangeGuide -Database $db)
         'cluster-notes.txt'      = $cluster
         'pg_hba.conf.snippet'    = $hba
         'termidesk.conf.db'      = @"
@@ -145,6 +147,84 @@ DBNAME='$($db.name)'
 DBUSER='$($db.user)'
 "@
     }
+}
+
+function Get-TermideskPostgresqlPasswordChangeScript {
+    param($Database)
+    $db = $Database
+    return @"
+#!/bin/bash
+# Termidesk 7.0 — смена пароля пользователя PostgreSQL
+# Запуск: sudo bash 02-change-password.sh 'НовыйПароль'
+# Или:   export TERMIDESK_DB_NEW_PASS='НовыйПароль'; sudo -E bash 02-change-password.sh
+set -euo pipefail
+
+DBUSER='$($db.user)'
+DBNAME='$($db.name)'
+NEW_PASS="`${1:-`${TERMIDESK_DB_NEW_PASS:-}}"
+
+if [ -z "`$NEW_PASS" ]; then
+  read -rsp "Новый пароль для `$DBUSER: " NEW_PASS
+  echo
+fi
+
+sudo su - postgres -c "psql -c \"ALTER USER `$DBUSER WITH PASSWORD '`$NEW_PASS';\""
+
+echo "Пароль PostgreSQL для `$DBUSER изменён."
+echo "Обновите DBPASS в /etc/opt/termidesk-vdi/termidesk.conf на всех диспетчерах и CeleryMan."
+echo "При OpenBao — обновите секрет в `$SECRETS_OPENBAO_DB_PATH и перезапустите termidesk-vdi."
+"@
+}
+
+function Get-TermideskPostgresqlPasswordChangeGuide {
+    param($Database)
+    $db = $Database
+    return @"
+# Смена пароля PostgreSQL для Termidesk
+
+## 1. На узле PostgreSQL
+
+```bash
+sudo bash output/03-database/02-change-password.sh 'НовыйСложныйПароль'
+```
+
+## 2. На всех узлах Termidesk (диспетчеры, CeleryMan)
+
+1. Отредактируйте `/etc/opt/termidesk-vdi/termidesk.conf` — параметр `DBPASS`.
+2. Либо выполните `/opt/termidesk/sbin/termidesk-config` → «Настройка подключения к СУБД».
+3. Перезапустите службы: `sudo systemctl restart termidesk-vdi`.
+
+## 3. OpenBao (если `SECRETS_STORAGE_METHOD=openbao`)
+
+Обновите секрет БД по пути из `SECRETS_OPENBAO_DB_PATH`, затем перезапустите компоненты.
+
+## 4. Панель администратора (Windows)
+
+Обновите `database.password` в `config/termidesk-settings.json`, чтобы при перегенерации скриптов не подставился старый пароль.
+
+Текущие параметры: пользователь `$($db.user)`, БД `$($db.name)`, хост `$($db.host1):$($db.port)`.
+"@
+}
+
+function Invoke-TermideskDatabasePasswordChange {
+    Export-TermideskDatabaseScripts
+    $s = Get-TermideskSettingsOrNew
+    $newPass = Invoke-TermideskPrompt -Caption 'Новый пароль PostgreSQL' -Secure
+    if (-not $newPass) {
+        Write-Host 'Пароль не задан.' -ForegroundColor Yellow
+        return
+    }
+    $script = Get-Content (Get-TermideskOutputPath '03-database/02-change-password.sh') -Raw
+    $escaped = $newPass -replace "'", "''"
+    $remote = @"
+export TERMIDESK_DB_NEW_PASS='$escaped'
+$script
+"@
+    Invoke-TermideskOnNode -HostAddress $s.database.host1 -ScriptContent $remote -ScriptName 'pg-change-pass.sh'
+    $s.database.password = $newPass
+    Save-TermideskSettings -Settings $s
+    Write-Host 'Пароль сохранён в termidesk-settings.json. Обновите termidesk.conf на диспетчерах вручную или через termidesk-config.' -ForegroundColor Yellow
+    Wait-TermideskKey
 }
 
 function Edit-TermideskRabbitMqWizard {
@@ -207,10 +287,12 @@ NODE_ROLES='TERMQ'
 "@
 
     Export-TermideskArtifacts -Section '04-rabbitmq' -Files @{
-        '01-rabbitmq-setup.sh'   = $rabbitScript
-        'termidesk.conf.rabbitmq'= "RABBITMQ_URL='amqp://$($rmq.user):<pass>@$($rmq.host):$($rmq.port)$($rmq.vhost)'"
-        'termidesk.conf.tmq'     = $tmqSnippet
-        'definitions.json.sample'= @"
+        '01-rabbitmq-setup.sh'    = $rabbitScript
+        '02-change-password.sh'   = (Get-TermideskRabbitMqPasswordChangeScript -RabbitMq $rmq)
+        'change-password-guide.md'= (Get-TermideskRabbitMqPasswordChangeGuide -RabbitMq $rmq)
+        'termidesk.conf.rabbitmq' = "RABBITMQ_URL='amqp://$($rmq.user):<pass>@$($rmq.host):$($rmq.port)$($rmq.vhost)'"
+        'termidesk.conf.tmq'      = $tmqSnippet
+        'definitions.json.sample' = @"
 {
   "users": [{ "name": "$($rmq.user)", "password_hash": "<hash>", "tags": "administrator" }],
   "vhosts": [{ "name": "$($rmq.vhost)" }],
@@ -218,6 +300,91 @@ NODE_ROLES='TERMQ'
 }
 "@
     }
+}
+
+function Get-TermideskRabbitMqPasswordChangeScript {
+    param($RabbitMq)
+    $rmq = $RabbitMq
+    return @"
+#!/bin/bash
+# Termidesk 7.0 — смена пароля пользователя RabbitMQ
+# Запуск: sudo bash 02-change-password.sh 'НовыйПароль'
+set -euo pipefail
+
+RMQ_USER='$($rmq.user)'
+VHOST='$($rmq.vhost)'
+NEW_PASS="`${1:-`${TERMIDESK_RMQ_NEW_PASS:-}}"
+
+if [ -z "`$NEW_PASS" ]; then
+  read -rsp "Новый пароль для `$RMQ_USER: " NEW_PASS
+  echo
+fi
+
+sudo rabbitmqctl change_password "`$RMQ_USER" "`$NEW_PASS"
+sudo rabbitmqctl set_permissions -p "`$VHOST" "`$RMQ_USER" ".*" ".*" ".*"
+
+echo "Пароль RabbitMQ для `$RMQ_USER изменён."
+echo "Обновите RABBITMQ_PASS и coordinatorPass на диспетчерах, шлюзах и в termidesk.conf."
+"@
+}
+
+function Get-TermideskRabbitMqPasswordChangeGuide {
+    param($RabbitMq)
+    $rmq = $RabbitMq
+    return @"
+# Смена пароля RabbitMQ для Termidesk
+
+## 1. На узле RabbitMQ
+
+```bash
+sudo bash output/04-rabbitmq/02-change-password.sh 'НовыйСложныйПароль'
+```
+
+## 2. На диспетчерах и шлюзах
+
+Обновите в `/etc/opt/termidesk-vdi/termidesk.conf`:
+
+- `RABBITMQ_PASS`
+- `coordinatorPass` (если шлюз использует ту же учётку)
+
+Либо через `termidesk-config` → «Настройка подключения к RabbitMQ».
+
+Перезапуск: `sudo systemctl restart termidesk-vdi` (диспетчеры) и служба Connect (шлюзы).
+
+## 3. coordinatorUrl
+
+Если пароль в URL (`amqp://user:pass@host:5672/`), обновите URL в конфиге шлюза.
+
+## 4. Панель (Windows)
+
+Обновите `rabbitmq.password` и `gateway.coordinatorPass` в `config/termidesk-settings.json`.
+
+Текущие параметры: пользователь `$($rmq.user)`, vhost `$($rmq.vhost)`, хост `$($rmq.host):$($rmq.port)`.
+"@
+}
+
+function Invoke-TermideskRabbitMqPasswordChange {
+    Export-TermideskRabbitMqScripts
+    $s = Get-TermideskSettingsOrNew
+    $newPass = Invoke-TermideskPrompt -Caption 'Новый пароль RabbitMQ' -Secure
+    if (-not $newPass) {
+        Write-Host 'Пароль не задан.' -ForegroundColor Yellow
+        return
+    }
+    $script = Get-Content (Get-TermideskOutputPath '04-rabbitmq/02-change-password.sh') -Raw
+    $escaped = $newPass -replace "'", "''"
+    $remote = @"
+export TERMIDESK_RMQ_NEW_PASS='$escaped'
+$script
+"@
+    Invoke-TermideskOnNode -HostAddress $s.rabbitmq.host -ScriptContent $remote -ScriptName 'rmq-change-pass.sh'
+    $s.rabbitmq.password = $newPass
+    if ($s.gateway.coordinatorUser -eq $s.rabbitmq.user) {
+        $s.gateway.coordinatorPass = $newPass
+    }
+    Save-TermideskSettings -Settings $s
+    Write-Host 'Пароль сохранён в termidesk-settings.json. Обновите termidesk.conf на компонентах.' -ForegroundColor Yellow
+    Wait-TermideskKey
 }
 
 function Edit-TermideskOpenBaoWizard {
@@ -302,6 +469,14 @@ function Invoke-TermideskDatabaseMenu { Invoke-TermideskSubMenu -Title 'СУБД
         Invoke-TermideskOnNode -HostAddress $s.database.host1 -ScriptContent $script
         Wait-TermideskKey
     }}
+    '4' = @{ Label = 'Сменить пароль пользователя БД (SSH)'; Action = { Invoke-TermideskDatabasePasswordChange } }
+    '5' = @{ Label = 'Показать гайд смены пароля БД'; Action = {
+        Export-TermideskDatabaseScripts
+        $guide = Get-TermideskOutputPath '03-database/change-password-guide.md'
+        if (Test-Path $guide) { Get-Content $guide | Write-Host }
+        else { Write-Host 'Сначала сгенерируйте скрипты (пункт 2).' -ForegroundColor Yellow }
+        Wait-TermideskKey
+    }}
 }}
 
 function Invoke-TermideskRabbitMqMenu { Invoke-TermideskSubMenu -Title 'RabbitMQ / TermideskMQ' -DocSection 'prepare' -Items @{
@@ -312,6 +487,14 @@ function Invoke-TermideskRabbitMqMenu { Invoke-TermideskSubMenu -Title 'RabbitMQ
         $s = Get-TermideskSettingsOrNew
         $script = Get-Content (Get-TermideskOutputPath '04-rabbitmq/01-rabbitmq-setup.sh') -Raw
         Invoke-TermideskOnNode -HostAddress $s.rabbitmq.host -ScriptContent $script
+        Wait-TermideskKey
+    }}
+    '4' = @{ Label = 'Сменить пароль пользователя RabbitMQ (SSH)'; Action = { Invoke-TermideskRabbitMqPasswordChange } }
+    '5' = @{ Label = 'Показать гайд смены пароля RabbitMQ'; Action = {
+        Export-TermideskRabbitMqScripts
+        $guide = Get-TermideskOutputPath '04-rabbitmq/change-password-guide.md'
+        if (Test-Path $guide) { Get-Content $guide | Write-Host }
+        else { Write-Host 'Сначала сгенерируйте скрипты (пункт 2).' -ForegroundColor Yellow }
         Wait-TermideskKey
     }}
 }}
@@ -334,5 +517,6 @@ Export-ModuleMember -Function @(
     'Invoke-TermideskPrepareMenu','Invoke-TermideskDatabaseMenu',
     'Invoke-TermideskRabbitMqMenu','Invoke-TermideskOpenBaoMenu',
     'Export-TermideskPrepareScripts','Export-TermideskDatabaseScripts',
-    'Export-TermideskRabbitMqScripts','Export-TermideskOpenBaoScripts'
+    'Export-TermideskRabbitMqScripts','Export-TermideskOpenBaoScripts',
+    'Invoke-TermideskDatabasePasswordChange','Invoke-TermideskRabbitMqPasswordChange'
 )

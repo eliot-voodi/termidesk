@@ -72,6 +72,8 @@ li{margin:.2rem 0}
     <li><a href="#s8">8. Production-чек-лист</a></li>
     <li><a href="#s9">9. Как панель ходит по SSH</a></li>
     <li><a href="#s10">10. Порты</a></li>
+    <li><a href="#cert-mtls">Сертификат пользователя и mTLS</a></li>
+    <li><a href="#pwd-rotate">Смена паролей PostgreSQL и RabbitMQ</a></li>
     <li><a href="#guest">Гостевая ОС, TERA и STAL</a></li>
     <li class="sub"><a href="#usb">USB: лимит каналов</a></li>
     <li class="sub"><a href="#agent">Видеоагент и tera-vdagentd</a></li>
@@ -82,11 +84,13 @@ li{margin:.2rem 0}
     <li><a href="#s14">Официальные разделы</a></li>
     <li><a href="#s15">Шпаргалка команд</a></li>
     <li><a href="#s16">Обновление панели</a></li>
+    <li><a href="ИБ-АПРОБИРОВАНИЕ.html">ИБ — апробирование (вкладки)</a></li>
   </ol>
   <div class="navdocs" style="margin-top:1rem">
     <a href="ИНСТРУКЦИЯ.html">Инструкция</a>
     <a href="НАСТРОЙКА-КЛАСТЕРА.html">Кластер</a>
     <a href="ГАЙД-ШАБЛОН-JSON.html">JSON</a>
+    <a href="ИБ-АПРОБИРОВАНИЕ.html">ИБ</a>
   </div>
 </aside>
 <main class="main">
@@ -312,14 +316,14 @@ sudo openssl dhparam -out /etc/nginx/dhparam.pem 4096</code></pre>
   <div class="table-wrap"><table>
     <tr><th>Пункт</th><th>Что делает</th><th>Куда смотреть после генерации</th></tr>
     <tr><td>[2]</td><td>NTP, репозитории, заметки firewall</td><td><code>output/02-prepare/</code></td></tr>
-    <tr><td>[3]</td><td>Параметры PostgreSQL, <code>pg_hba</code> по CIDR из настроек</td><td><code>output/03-database/</code></td></tr>
-    <tr><td>[4]</td><td>RabbitMQ или TermideskMQ из шаблонов</td><td><code>output/04-rabbitmq/</code></td></tr>
+    <tr><td>[3]</td><td>Параметры PostgreSQL, <code>pg_hba</code> по CIDR из настроек; <strong>п.4–5 — смена пароля БД</strong></td><td><code>output/03-database/</code></td></tr>
+    <tr><td>[4]</td><td>RabbitMQ или TermideskMQ из шаблонов; <strong>п.4–5 — смена пароля брокера</strong></td><td><code>output/04-rabbitmq/</code></td></tr>
     <tr><td>[5]</td><td>OpenBao вместо паролей в conf</td><td><code>output/05-openbao/</code></td></tr>
     <tr><td>[6]</td><td>Эталонный и дополнительные диспетчеры</td><td><code>output/06-dispatcher/</code></td></tr>
     <tr><td>[7]</td><td>CeleryMan, <code>NODE_ROLES=CELERYMAN</code>, порты 8103/8104</td><td><code>output/07-celery/</code></td></tr>
     <tr><td>[8]</td><td>Шлюз, websockify, регистрация в брокере</td><td><code>output/08-gateway/</code></td></tr>
     <tr><td>[9]</td><td>nginx site и SSL snippets</td><td><code>output/09-nginx/</code></td></tr>
-    <tr><td>[10]</td><td>CA, пути cert/key, mTLS</td><td><code>output/10-ssl/</code></td></tr>
+    <tr><td>[10]</td><td>CA, mTLS, <strong>выпуск сертификата пользователя</strong></td><td><code>output/10-ssl/</code></td></tr>
     <tr><td>[11]</td><td>Памятка по <code>termidesk-config</code></td><td><code>output/11-termidesk-config/</code></td></tr>
     <tr><td>[12]</td><td>Домены аутентификации, в том числе keytab MS AD</td><td><code>output/12-domains/</code></td></tr>
     <tr><td>[13]</td><td>Поставщик → шаблон → фонд → политики</td><td><code>output/13-providers/</code>, <code>output/13-pools/</code></td></tr>
@@ -327,6 +331,7 @@ sudo openssl dhparam -out /etc/nginx/dhparam.pem 4096</code></pre>
     <tr><td>[15]</td><td>Health Check, заметки Zabbix</td><td><code>output/15-monitoring/</code></td></tr>
     <tr><td>[16]</td><td>Backup и restore БД по SSH</td><td><code>output/16-backup/</code></td></tr>
     <tr><td>[17]</td><td>Аудит, syslog, fluentd</td><td><code>output/17-logging/</code></td></tr>
+    <tr><td>[19]</td><td>Сценарии апробирования ИБ-91…130 и СК-1…25</td><td><code>output/19-ib-compliance/</code></td></tr>
     <tr><td>[C]</td><td>1 показать JSON; 2 загрузить example (сотрёт боевые значения); 3 короткий мастер; 4 генерация; 5 экспорт только HA</td><td><code>config/</code></td></tr>
     <tr><td>[A]</td><td>Прогон всех разделов. Если заполнен <code>cluster.tls</code>, дополнительно пишется <code>18-ha-wizard</code></td><td><code>output/</code></td></tr>
     <tr><td>[O]</td><td>Проводник на <code>output\</code></td><td></td></tr>
@@ -418,6 +423,79 @@ curl -kI https://&lt;VIP-FQDN&gt;/</code></pre>
     <tr><td>43900</td><td>агент ВРМ, если порт не меняли</td><td>диспетчер</td></tr>
   </table></div>
   <p>Числа в мастере [18] важнее этой таблицы. Между LB и бэкендами должны быть открыты порт диспетчера и порт websockify. Клиенты ходят на VIP:443.</p>
+</section>
+
+<section id="cert-mtls" data-blob="сертификат пользователя mTLS x509 аутентификация openssl pkcs12 apache X-TDSK-SSL-CLIENT">
+  <h2>Сертификат пользователя и аутентификация по сертификату</h2>
+  <p>Раздел дополняет пункт меню <strong>[10]</strong>. Артефакты генерируются в <code>output/10-ssl/</code>.</p>
+
+  <h3>1. Выпуск сертификата пользователя</h3>
+  <p>На эталонном диспетчере или на PKI-узле:</p>
+  <pre><code>cd /path/to/termidesk/output/10-ssl
+sudo bash generate-user-certificate.sh 'user@corp.example.ru' 365</code></pre>
+  <p>Результат:</p>
+  <ul>
+    <li><code>/etc/opt/termidesk-vdi/mtls/ca.crt</code> — корневой CA для проверки клиентов</li>
+    <li><code>client.crt</code> + <code>client.key</code> — пара пользователя</li>
+  </ul>
+  <p>Для браузера или Termidesk Connect экспортируйте PKCS#12 и импортируйте в хранилище клиента:</p>
+  <pre><code>sudo openssl pkcs12 -export \
+  -inkey /etc/opt/termidesk-vdi/mtls/client.key \
+  -in /etc/opt/termidesk-vdi/mtls/client.crt \
+  -certfile /etc/opt/termidesk-vdi/mtls/ca.crt \
+  -out user.p12</code></pre>
+
+  <h3>2. Настройка Termidesk (mTLS на диспетчере)</h3>
+  <ol>
+    <li>Скопируйте <code>ca.crt</code>, <code>client.crt</code>, <code>client.key</code> в <code>/etc/opt/termidesk-vdi/mtls/</code>.</li>
+    <li>Запустите <code>/opt/termidesk/sbin/termidesk-config</code> → «Сертификаты» → mTLS:
+      <ul>
+        <li><code>MTLS_MODE=on</code> (или значение по документации вашей сборки)</li>
+        <li><code>MTLS_CLIENT_CA</code>, <code>MTLS_CLIENT_CERT</code>, <code>MTLS_CLIENT_KEY</code></li>
+      </ul>
+    </li>
+    <li>В Apache (<code>/etc/apache2/sites-available/termidesk.conf</code>) добавьте фрагмент из <code>apache-mtls-snippet.conf</code>:
+      <ul>
+        <li><code>SSLVerifyClient require</code></li>
+        <li><code>SSLCACertificateFile</code> — путь к CA</li>
+        <li>заголовки <code>X-TDSK-SSL-CLIENT-*</code> для передачи DN сертификата в Termidesk</li>
+      </ul>
+    </li>
+    <li>«Перезапуск служб» в termidesk-config.</li>
+  </ol>
+
+  <h3>3. Домен аутентификации в портале</h3>
+  <p>Портал администратора → «Аутентификация» → «Домены» → добавить домен типа <strong>сертификат X.509 / mTLS</strong>:</p>
+  <ul>
+    <li>сопоставление поля CN/SAN сертификата с учётной записью пользователя;</li>
+    <li>привязка домена к группам и политикам выдачи ВРМ.</li>
+  </ul>
+
+  <h3>4. Termidesk Connect (опционально)</h3>
+  <p>На шлюзе Connect: включите mTLS в серверном SSL-профиле (<code>mtls true</code>, <code>ca-certs</code> для проверки клиентского сертификата). Документация Connect: раздел TLS / ssl-profile.</p>
+
+  <div class="callout">Полный текст: <code>output/10-ssl/user-certificate-auth.md</code> · официально: <a href="https://termidesk.ru/docs/ru-termidesk-doc/v7.0/documentation/termidesk-settings/settings/replace-ssl-apache.html">SSL/mTLS Termidesk 7.0</a></div>
+</section>
+
+<section id="pwd-rotate" data-blob="смена пароля postgresql rabbitmq DBPASS RABBITMQ_PASS rotate">
+  <h2>Смена паролей PostgreSQL и RabbitMQ</h2>
+  <p>Пункты меню <strong>[3] → 4–5</strong> и <strong>[4] → 4–5</strong>. Скрипты: <code>02-change-password.sh</code> в каталогах <code>03-database</code> и <code>04-rabbitmq</code>.</p>
+
+  <h3>PostgreSQL</h3>
+  <pre><code># на узле БД
+sudo bash output/03-database/02-change-password.sh 'НовыйСложныйПароль'
+
+# на всех диспетчерах и CeleryMan — обновить DBPASS в termidesk.conf
+sudo /opt/termidesk/sbin/termidesk-config
+sudo systemctl restart termidesk-vdi</code></pre>
+  <p>При OpenBao обновите секрет по пути <code>SECRETS_OPENBAO_DB_PATH</code>. На Windows обновите <code>database.password</code> в <code>termidesk-settings.json</code>.</p>
+
+  <h3>RabbitMQ</h3>
+  <pre><code>sudo bash output/04-rabbitmq/02-change-password.sh 'НовыйСложныйПароль'
+
+# диспетчеры: RABBITMQ_PASS; шлюзы: coordinatorPass и coordinatorUrl
+sudo systemctl restart termidesk-vdi</code></pre>
+  <p>Панель при SSH-смене сохраняет новый пароль в JSON и синхронизирует <code>gateway.coordinatorPass</code>, если учётка совпадает с <code>rabbitmq.user</code>.</p>
 </section>
 
 <section id="guest" data-blob="tera spice гостевая astra золотой образ vdagent usb sasl kerberos stal физическая машина">

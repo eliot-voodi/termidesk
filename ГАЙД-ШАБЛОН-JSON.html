@@ -6,8 +6,9 @@
 <li class="toc-h2"><a href="#5-проверка-перед-генерацией">5. Проверка перед генерацией</a></li>
 <li class="toc-h2"><a href="#6-что-получается-после--generateha">6. Что получается после `-GenerateHa`</a></li>
 <li class="toc-h2"><a href="#7-связь-файлов">7. Связь файлов</a></li>
+<li class="toc-h2"><a href="#413-безопасность-сессий">4.13. Безопасность сессий и API</a></li>
 <li class="toc-h2"><a href="#8-чек-лист-заполнения">8. Чек-лист заполнения</a></li>
-</ol><div class="navdocs"><a href="ИНСТРУКЦИЯ.html">Панель</a><a href="НАСТРОЙКА-КЛАСТЕРА.html">Кластер</a><a href="ГАЙД-ШАБЛОН-JSON.html">JSON</a></div></aside><main class="main"><div class="hero"><div class="badge">HTML</div><h1>8. Чек-лист заполнения</h1></div><h1 id="гайд-заполнение-json-шаблона-ha-кластера">Гайд: заполнение JSON-шаблона HA-кластера</h1>
+</ol><div class="navdocs"><a href="ИНСТРУКЦИЯ.html">Панель</a><a href="НАСТРОЙКА-КЛАСТЕРА.html">Кластер</a><a href="ГАЙД-ШАБЛОН-JSON.html">JSON</a><a href="ИБ-АПРОБИРОВАНИЕ.html">ИБ</a></div></aside><main class="main"><div class="hero"><div class="badge">HTML</div><h1>8. Чек-лист заполнения</h1></div><h1 id="гайд-заполнение-json-шаблона-ha-кластера">Гайд: заполнение JSON-шаблона HA-кластера</h1>
 <hr>
 <h2 id="1-зачем-это-нужно">1. Зачем это нужно</h2>
 <ol>
@@ -72,6 +73,9 @@ Write-Host 'JSON OK'</code></pre>
 <li><code>nginx-site.conf</code>, <code>termidesk.conf.snippet</code>, <code>README-deploy-order.txt</code></li>
 <hr>
 <h2 id="7-связь-файлов">7. Связь файлов</h2>
+<h3 id="413-безопасность-сессий">4.13. Безопасность сессий и API-токенов</h3>
+<p>Неактивность сессии → блокировка → восстановление только после повторной аутентификации. Настройка: портал «Системные настройки», политики, при необходимости termidesk.conf.</p>
+<p>Срок API-токена: <code>AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS</code>, политика <code>/api/auth/v7.0/login</code>. <strong>Требует уточнения:</strong> web-сессия может разрываться, а Bearer-токен жить до TTL — зафиксируйте на стенде и согласуйте меры.</p>
 <hr>
 <h2 id="8-чек-лист-заполнения">8. Чек-лист заполнения</h2>
 <li><label><input type="checkbox" disabled> Скопирован шаблон, оригинал не испорчен</label></li>

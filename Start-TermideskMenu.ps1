@@ -43,6 +43,7 @@ Import-Module (Join-Path $modulesPath 'Termidesk.Components.psm1') -Force
 Import-Module (Join-Path $modulesPath 'Termidesk.Portal.psm1') -Force
 Import-Module (Join-Path $modulesPath 'Termidesk.Operations.psm1') -Force
 Import-Module (Join-Path $modulesPath 'Termidesk.HaWizard.psm1') -Force
+Import-Module (Join-Path $modulesPath 'Termidesk.IbCompliance.psm1') -Force
 
 Initialize-TermideskPaths
 
@@ -144,6 +145,7 @@ function Start-TermideskMenu {
             '15' { Invoke-TermideskMonitoringMenu }
             '16' { Invoke-TermideskBackupMenu }
             '17' { Invoke-TermideskLoggingMenu }
+            '19' { Invoke-TermideskIbComplianceMenu }
             'C'  { Invoke-TermideskSettingsMenu }
             'A'  { Export-TermideskAllArtifacts }
             'O'  {

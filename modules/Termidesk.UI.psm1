@@ -38,6 +38,7 @@ function Show-TermideskMainMenu {
     Write-Host '  [15] Мониторинг и Health Check'
     Write-Host '  [16] Резервное копирование и восстановление'
     Write-Host '  [17] Журналирование, аудит и syslog'
+    Write-Host '  [19] Сценарии апробирования ИБ/СК (ИБ-91…130, СК-1…25)'
     Write-Host '  ─── Прочее ───' -ForegroundColor DarkGray
     Write-Host '  [C]  Конфигурация (termidesk-settings.json)'
     Write-Host '  [A]  Сгенерировать ВСЕ скрипты и конфиги'
@@ -54,6 +55,7 @@ function Show-TermideskInstruction {
     $mdPath = Join-Path $root 'ИНСТРУКЦИЯ.md'
     $clusterHtml = Join-Path $root 'НАСТРОЙКА-КЛАСТЕРА.html'
     $jsonGuide = Join-Path $root 'ГАЙД-ШАБЛОН-JSON.html'
+    $ibHtml = Join-Path $root 'ИБ-АПРОБИРОВАНИЕ.html'
     Show-TermideskBanner
     Write-Host '  Документация панели Termidesk 7.0' -ForegroundColor Yellow
     Write-Host ''
@@ -61,8 +63,10 @@ function Show-TermideskInstruction {
     $hasMd = Test-Path -LiteralPath $mdPath
     $hasCluster = Test-Path -LiteralPath $clusterHtml
     $hasJson = Test-Path -LiteralPath $jsonGuide
+    $hasIb = Test-Path -LiteralPath $ibHtml
     if ($hasCluster) { Write-Host "  Кластер:  $clusterHtml" -ForegroundColor Green }
     if ($hasJson) { Write-Host "  JSON:     $jsonGuide" -ForegroundColor Green }
+    if ($hasIb) { Write-Host "  ИБ:       $ibHtml" -ForegroundColor Green }
     if ($hasHtml) { Write-Host "  Панель:   $htmlPath" -ForegroundColor Cyan }
     Write-Host ''
     Write-Host '  [1] Полное описание настройки кластера'
@@ -70,6 +74,7 @@ function Show-TermideskInstruction {
     Write-Host '  [3] Инструкция панели (ИНСТРУКЦИЯ.html)'
     Write-Host '  [4] Markdown панели'
     Write-Host '  [5] Оглавление в консоли'
+    Write-Host '  [6] Апробирование ИБ — пошагово со скриншотами (ИБ-АПРОБИРОВАНИЕ.html)'
     Write-Host '  [0] Назад'
     Write-Host ''
     $c = Read-Host '  Выбор'
@@ -109,6 +114,13 @@ function Show-TermideskInstruction {
                 }
             }
             Write-Host ''
+            Wait-TermideskKey
+        }
+        '6' {
+            if ($hasIb) { Start-Process -FilePath $ibHtml }
+            else {
+                Write-Host '  ИБ-АПРОБИРОВАНИЕ.html не найден. Сгенерируйте: [19]→2 или [A]' -ForegroundColor Yellow
+            }
             Wait-TermideskKey
         }
     }

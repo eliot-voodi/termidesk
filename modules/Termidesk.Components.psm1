@@ -179,11 +179,105 @@ MTLS_CLIENT_KEY='/etc/opt/termidesk-vdi/mtls/client.key'
 MTLS_CLIENT_CA='/etc/opt/termidesk-vdi/mtls/ca.crt'
 "@
 
+    $userCertScript = @"
+#!/bin/bash
+# Генерация CA и пользовательского сертификата для mTLS Termidesk
+# Результат: /etc/opt/termidesk-vdi/mtls/{ca.crt,client.crt,client.key}
+set -euo pipefail
+
+CN="`${1:-termidesk-user}"
+DAYS="`${2:-365}"
+OUT="/etc/opt/termidesk-vdi/mtls"
+sudo mkdir -p "`$OUT"
+cd "`$OUT"
+
+if [ ! -f ca.key ]; then
+  sudo openssl genrsa -out ca.key 4096
+  sudo openssl req -x509 -new -nodes -key ca.key -sha256 -days `$DAYS \
+    -subj "/CN=Termidesk-Internal-CA" -out ca.crt
+fi
+
+sudo openssl genrsa -out client.key 2048
+sudo openssl req -new -key client.key -subj "/CN=`$CN" -out client.csr
+sudo openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial \
+  -out client.crt -days `$DAYS -sha256
+sudo rm -f client.csr ca.srl
+sudo chmod 640 client.key
+sudo chown root:termidesk client.key client.crt ca.crt 2>/dev/null || true
+
+echo "CA: `$OUT/ca.crt"
+echo "Клиент: `$OUT/client.crt + `$OUT/client.key"
+echo "Импортируйте ca.crt в доверенные на клиенте; client.p12 — через openssl pkcs12 при необходимости."
+"@
+
+    $mtlsApache = @"
+# Apache mTLS для Termidesk — фрагмент VirtualHost *:443
+# Док: $(Get-TermideskDocLink -Section ssl)
+SSLEngine on
+SSLCertificateFile /etc/opt/termidesk-vdi/ssl-cert-snakeoil.pem
+SSLCertificateKeyFile /etc/opt/termidesk-vdi/ssl-cert-snakeoil.key
+SSLCACertificateFile /etc/opt/termidesk-vdi/mtls/ca.crt
+SSLVerifyClient require
+SSLVerifyDepth 2
+
+RequestHeader set X-TDSK-SSL-CLIENT-FORMAT 'apache'
+RequestHeader set X-TDSK-SSL-CLIENT-S-DN expr=%{SSL_CLIENT_S_DN}
+RequestHeader set X-TDSK-SSL-CLIENT-I-DN expr=%{SSL_CLIENT_I_DN}
+RequestHeader set X-TDSK-SSL-CLIENT-SERIAL expr=%{SSL_CLIENT_M_SERIAL}
+RequestHeader set X-TDSK-SSL-CLIENT-VALIDITY-START expr=%{SSL_CLIENT_V_START}
+RequestHeader set X-TDSK-SSL-CLIENT-VALIDITY-END expr=%{SSL_CLIENT_V_END}
+RequestHeader set X-TDSK-SSL-CLIENT-VERIFY expr=%{SSL_CLIENT_VERIFY}
+"@
+
+    $mtlsGuide = @"
+# Аутентификация по сертификату пользователя (mTLS) в Termidesk 7.0
+
+## 1. Выпуск сертификата
+
+На эталонном диспетчере или PKI:
+
+```bash
+sudo bash output/10-ssl/generate-user-certificate.sh 'user@corp.example.ru' 365
+```
+
+Для браузера/клиента экспортируйте PKCS#12:
+
+```bash
+sudo openssl pkcs12 -export -inkey /etc/opt/termidesk-vdi/mtls/client.key \
+  -in /etc/opt/termidesk-vdi/mtls/client.crt -certfile /etc/opt/termidesk-vdi/mtls/ca.crt \
+  -out user.p12
+```
+
+## 2. Termidesk (Apache / termidesk-config)
+
+1. Скопируйте `ca.crt`, `client.crt`, `client.key` в `/etc/opt/termidesk-vdi/mtls/`.
+2. В `/opt/termidesk/sbin/termidesk-config` → «Сертификаты» → mTLS:
+   - `MTLS_MODE=on` (или `require` — см. документацию сборки)
+   - пути `MTLS_CLIENT_CA`, `MTLS_CLIENT_CERT`, `MTLS_CLIENT_KEY`
+3. Настройте Apache по `apache-mtls-snippet.conf` (заголовки `X-TDSK-SSL-CLIENT-*`).
+4. Перезапуск служб через termidesk-config.
+
+## 3. Портал администратора
+
+«Аутентификация» → «Домены» → добавьте домен типа **Сертификат X.509** (или mTLS):
+- указать поле DN/CN для сопоставления с пользователем;
+- привязать домен к группам/политикам.
+
+## 4. Termidesk Connect (опционально)
+
+В CLI Connect: `set ssl-profile server <имя> setting mtls true` и `ca-certs` для проверки клиентского сертификата.
+
+Документация: $(Get-TermideskDocLink -Section ssl)
+"@
+
     Export-TermideskArtifacts -Section '10-ssl' -Files @{
-        'apache-ssl-setup.sh'    = $apache
-        'https-redirect.conf'    = $redirect
-        'termidesk.conf.mtls'    = $mtls
-        'install-ca-guide.txt'   = "Док: $(Get-TermideskDocLink -Section ssl)"
+        'apache-ssl-setup.sh'       = $apache
+        'https-redirect.conf'       = $redirect
+        'termidesk.conf.mtls'       = $mtls
+        'generate-user-certificate.sh' = $userCertScript
+        'apache-mtls-snippet.conf'  = $mtlsApache
+        'user-certificate-auth.md'  = $mtlsGuide
+        'install-ca-guide.txt'      = "Док: $(Get-TermideskDocLink -Section ssl)"
     }
 }
 
@@ -276,7 +370,13 @@ function Invoke-TermideskNginxMenu { Invoke-TermideskSubMenu -Title 'Балан�
 }}
 
 function Invoke-TermideskSslMenu { Invoke-TermideskSubMenu -Title 'SSL/TLS и сертификаты' -DocSection 'ssl' -Items @{
-    '1' = @{ Label = 'Сгенерировать скрипты Apache SSL'; Action = { Export-TermideskSslScripts } }
+    '1' = @{ Label = 'Сгенерировать скрипты SSL/mTLS'; Action = { Export-TermideskSslScripts } }
+    '2' = @{ Label = 'Показать гайд: сертификат пользователя и mTLS'; Action = {
+        Export-TermideskSslScripts
+        $guide = Get-TermideskOutputPath '10-ssl/user-certificate-auth.md'
+        if (Test-Path $guide) { Get-Content $guide | Write-Host }
+        Wait-TermideskKey
+    }}
 }}
 
 function Invoke-TermideskConfigToolMenu { Invoke-TermideskSubMenu -Title 'termidesk-config' -DocSection 'termidesk-config' -Items @{

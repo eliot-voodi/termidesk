@@ -72,7 +72,7 @@ function Get-TermideskIbScenarioOverrides {
     Add-Override 'ИБ-14' @('См. раздел «Сертификаты» — выпуск cert и домен X.509','Проверьте вход с клиентским сертификатом') @('Успешный login по сертификату') '' 'manual' 'Аутентификация по сертификату работает' -Cert
     Add-Override 'ИБ-22' @('См. раздел «Замена паролей»','Замените пароли всех встроенных учётных записей') @('Нет дефолтных паролей') 'scripts/ib-103-check-defaults.sh' 'bash' 'Пароли по умолчанию заменены' -Pwd
     Add-Override 'ИБ-43' @('См. раздел «Сессии/API» — таймаут неактивности','После таймаута без действий требуется повторный login') @('Повторная аутентификация после блокировки') '' 'manual' 'Сессия блокируется по неактивности' -Session
-    Add-Override 'ИБ-44' @('См. раздел «Сессии/API» — TTL API-токена','Зафиксируйте фактическое время жизни Bearer-токена') @('Проверка TTL после /api/auth/v7.0/login') '' 'manual' 'Срок действия токена определён и согласован' -Session
+    Add-Override 'ИБ-44' @('Токен POST /api/auth/v7.0/login (X-Auth-Token): портал → Системные параметры → Безопасность → «Длительность сессии администратора, с»','Если есть Агрегатор: AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS на узле Агрегатора через termidesk-config или termidesk.conf','После изменения — перезапуск служб; проверьте 401 после истечения TTL','Отзыв: /api/auth/v7.0/legacy/logout') @('Портал: «Длительность сессии администратора, с»','termidesk.conf на Агрегаторе: AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS','401 на API после истечения срока') '' 'manual' 'Срок действия токена определён и согласован' -Session
 
     return $o
 }
@@ -306,12 +306,15 @@ function Get-TermideskParameterGuide {
             Where=@('Портал → Пользователи → Группы/Роли','API + termidesk-config CLI')
             How=@('Минимальные права (ИБ-34)','Наследование LDAP (ИБ-35)','Без анонимного UI/API') }
 
-        @{ Slug='session-timeout'; Group='Сессии и API'; Name='Таймаут неактивности'; Ib='ИБ-43'
-            Where=@('Портал → Системные настройки → сессии','Политики Connect')
-            How=@('Задайте таймаут','Проверьте повторный login после простоя','tab-session') }
-        @{ Slug='api-token-ttl'; Group='Сессии и API'; Name='AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS'; Ib='ИБ-44, ИБ-12, ИБ-13'
-            Where=@('termidesk.conf','POST /api/auth/v7.0/login')
-            How=@('TTL в секундах (default 600)','Проверьте жизнь Bearer-токена','Зафиксируйте расхождение с web-сессией') }
+        @{ Slug='session-timeout'; Group='Сессии и API'; Name='Таймаут неактивности (ИБ-43)'; Ib='ИБ-43'
+            Where=@("Портал $portal → Настройки → Системные параметры → Безопасность",'Политики пользовательского портала и клиентов Connect')
+            How=@('Задайте таймаут неактивности (название поля зависит от сборки 7.0)','Проверка: после простоя без действий API/UI требуют новый login','Не путать с «Длительность сессии администратора, с» — это абсолютный срок, а не простой') }
+        @{ Slug='api-x-auth-token'; Group='Сессии и API'; Name='X-Auth-Token (/api/auth/v7.0/login)'; Ib='ИБ-44, ИБ-12, ИБ-13'
+            Where=@("Портал администратора $portal → Настройки → Системные параметры → Безопасность → «Длительность сессии администратора, с»",'POST /api/auth/v7.0/login → поле token, дальше заголовок X-Auth-Token','Это основной API-токен диспетчера; не AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS')
+            How=@('Откройте портал администратора → Настройки → Системные параметры → Безопасность','Измените «Длительность сессии администратора, с» (значение в секундах, напр. 1800)','Сохраните; выполните login API и проверьте, когда тот же X-Auth-Token начнёт отдавать 401','Принудительный отзыв: GET или POST /api/auth/v7.0/legacy/logout с заголовком X-Auth-Token') }
+        @{ Slug='api-token-ttl'; Group='Сессии и API'; Name='AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS'; Ib='ИБ-44 (только если есть Агрегатор)'
+            Where=@('Узел с Агрегатором: /etc/opt/termidesk-vdi/termidesk.conf → AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS','termidesk-config → «Настройки Агрегатора» → «Время жизни токена Агрегатора, секунд»','Портал Агрегатора → Системные настройки → «Время жизни access token, с»','По умолчанию 600 с; JWT для связи Агрегатор↔диспетчер (/api/auth/v7.0/jwtauth), не login диспетчера')
+            How=@('SSH на узел Агрегатора (TERMIDESK_FARM_MODE=aggregator)','Способ 1: sudo /opt/termidesk/sbin/termidesk-config → «Настройки Агрегатора» → «Время жизни токена Агрегатора, секунд» → новое значение (напр. 300)','Способ 2: sudo nano /etc/opt/termidesk-vdi/termidesk.conf → AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS=''300''','Обязательно: termidesk-config → «Перезапуск служб» (или systemctl restart termidesk-vdi)','Проверка: grep AGGREGATOR_ACCESS_TOKEN_TTL /etc/opt/termidesk-vdi/termidesk.conf') }
 
         @{ Slug='internal-audit'; Group='Аудит'; Name='INTERNAL_AUDIT'; Ib='ИБ-45…97'
             Where=@('termidesk.conf','termidesk-config → Fluentd')

@@ -466,19 +466,26 @@ code{font-family:Consolas,monospace;font-size:.86em;background:rgba(255,255,255,
     <ol class="steps param-how"><li>Минимальные права (ИБ-34)</li><li>Наследование LDAP (ИБ-35)</li><li>Без анонимного UI/API</li></ol>
   </div>
 <h3 id="param-grp-сессии-и-api" class="param-group-title">Сессии и API</h3>
-  <div class="param-card" id="param-session-timeout" data-search="Таймаут неактивности ИБ-43 Сессии и API session-timeout">
-    <div class="param-head"><code>Таймаут неактивности</code><span class="tag tag-muted">ИБ-43</span></div>
+  <div class="param-card" id="param-session-timeout" data-search="Таймаут неактивности (ИБ-43) ИБ-43 Сессии и API session-timeout">
+    <div class="param-head"><code>Таймаут неактивности (ИБ-43)</code><span class="tag tag-muted">ИБ-43</span></div>
     <h4>Где найти</h4>
-    <ul class="param-where"><li>Портал → Системные настройки → сессии</li><li>Политики Connect</li></ul>
+    <ul class="param-where"><li>Портал https://portal.example.ru → Настройки → Системные параметры → Безопасность</li><li>Политики пользовательского портала и клиентов Connect</li></ul>
     <h4>Как изменить</h4>
-    <ol class="steps param-how"><li>Задайте таймаут</li><li>Проверьте повторный login после простоя</li><li>tab-session</li></ol>
+    <ol class="steps param-how"><li>Задайте таймаут неактивности (название поля зависит от сборки 7.0)</li><li>Проверка: после простоя без действий API/UI требуют новый login</li><li>Не путать с «Длительность сессии администратора, с» — это абсолютный срок, а не простой</li></ol>
   </div>
-  <div class="param-card" id="param-api-token-ttl" data-search="AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS ИБ-44, ИБ-12, ИБ-13 Сессии и API api-token-ttl">
-    <div class="param-head"><code>AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS</code><span class="tag tag-muted">ИБ-44, ИБ-12, ИБ-13</span></div>
+  <div class="param-card" id="param-api-x-auth-token" data-search="X-Auth-Token (/api/auth/v7.0/login) ИБ-44, ИБ-12, ИБ-13 Сессии и API api-x-auth-token">
+    <div class="param-head"><code>X-Auth-Token (/api/auth/v7.0/login)</code><span class="tag tag-muted">ИБ-44, ИБ-12, ИБ-13</span></div>
     <h4>Где найти</h4>
-    <ul class="param-where"><li>termidesk.conf</li><li>POST /api/auth/v7.0/login</li></ul>
+    <ul class="param-where"><li>Портал администратора https://portal.example.ru → Настройки → Системные параметры → Безопасность → «Длительность сессии администратора, с»</li><li>POST /api/auth/v7.0/login → поле token, дальше заголовок X-Auth-Token</li><li>Это основной API-токен диспетчера; не AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS</li></ul>
     <h4>Как изменить</h4>
-    <ol class="steps param-how"><li>TTL в секундах (default 600)</li><li>Проверьте жизнь Bearer-токена</li><li>Зафиксируйте расхождение с web-сессией</li></ol>
+    <ol class="steps param-how"><li>Откройте портал администратора → Настройки → Системные параметры → Безопасность</li><li>Измените «Длительность сессии администратора, с» (значение в секундах, напр. 1800)</li><li>Сохраните; выполните login API и проверьте, когда тот же X-Auth-Token начнёт отдавать 401</li><li>Принудительный отзыв: GET или POST /api/auth/v7.0/legacy/logout с заголовком X-Auth-Token</li></ol>
+  </div>
+  <div class="param-card" id="param-api-token-ttl" data-search="AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS ИБ-44 (только если есть Агрегатор) Сессии и API api-token-ttl">
+    <div class="param-head"><code>AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS</code><span class="tag tag-muted">ИБ-44 (только если есть Агрегатор)</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>Узел с Агрегатором: /etc/opt/termidesk-vdi/termidesk.conf → AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS</li><li>termidesk-config → «Настройки Агрегатора» → «Время жизни токена Агрегатора, секунд»</li><li>Портал Агрегатора → Системные настройки → «Время жизни access token, с»</li><li>По умолчанию 600 с; JWT для связи Агрегатор↔диспетчер (/api/auth/v7.0/jwtauth), не login диспетчера</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>SSH на узел Агрегатора (TERMIDESK_FARM_MODE=aggregator)</li><li>Способ 1: sudo /opt/termidesk/sbin/termidesk-config → «Настройки Агрегатора» → «Время жизни токена Агрегатора, секунд» → новое значение (напр. 300)</li><li>Способ 2: sudo nano /etc/opt/termidesk-vdi/termidesk.conf → AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS='300'</li><li>Обязательно: termidesk-config → «Перезапуск служб» (или systemctl restart termidesk-vdi)</li><li>Проверка: grep AGGREGATOR_ACCESS_TOKEN_TTL /etc/opt/termidesk-vdi/termidesk.conf</li></ol>
   </div>
 <h3 id="param-grp-аудит" class="param-group-title">Аудит</h3>
   <div class="param-card" id="param-internal-audit" data-search="INTERNAL_AUDIT ИБ-45…97 Аудит internal-audit">
@@ -656,10 +663,29 @@ grep -q &quot;HEALTH_CHECK_ACCESS_KEY=''&quot; /etc/opt/termidesk-vdi/termidesk.
     <div class="shot-uploader" data-shot="sess-timeout"><label class="shot-label">📷 Скриншот: настройка таймаута сессии<input type="file" accept="image/*" hidden></label><div class="shot-preview"></div></div>
   </div>
   <div class="card warn-card">
-    <h3>Срок действия API-токена</h3>
-    <p>Параметры: <code>AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS</code> (по умолчанию 600), login API <code>/api/auth/v7.0/login</code>.</p>
-    <p><strong>Требует уточнения на стенде:</strong> web-сессия может разрываться, а Bearer-токен жить до своего TTL. Зафиксируйте фактическое время жизни и согласуйте меры (уменьшение TTL, отзыв, повторный login).</p>
-    <div class="shot-uploader" data-shot="api-token"><label class="shot-label">📷 Скриншот: проверка TTL токена после login<input type="file" accept="image/*" hidden></label><div class="shot-preview"></div></div>
+    <h3>Срок действия API-токена — два разных механизма</h3>
+    <p><strong>Важно:</strong> в гайде раньше смешивались разные токены. Ниже — что менять в вашем случае.</p>
+    <h4>A. Токен REST API диспетчера (<code>X-Auth-Token</code> после <code>/api/auth/v7.0/login</code>)</h4>
+    <p>Меняется <b>в веб-портале администратора</b>, не в <code>termidesk.conf</code>:</p>
+    <ol class="steps">
+      <li> → <b>Настройки → Системные параметры → Безопасность</b></li>
+      <li>Параметр <b>«Длительность сессии администратора, с»</b> — задайте срок в секундах (например <code>1800</code>)</li>
+      <li>Сохраните; выполните <code>POST /api/auth/v7.0/login</code> и проверьте, когда тот же <code>X-Auth-Token</code> начнёт отдавать 401</li>
+      <li>Отозвать вручную: <code>GET</code> или <code>POST /api/auth/v7.0/legacy/logout</code> с заголовком <code>X-Auth-Token</code></li>
+    </ol>
+    <p class="meta">Подробнее: <a href="#param-api-x-auth-token" class="param-jump">карточка X-Auth-Token</a></p>
+    <h4>B. JWT Агрегатора (<code>AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS</code>, по умолчанию 600)</h4>
+    <p>Только если в архитектуре есть <b>Агрегатор</b>. Меняется <b>на узле Агрегатора</b>:</p>
+    <ol class="steps">
+      <li>SSH на узел с <code>TERMIDESK_FARM_MODE=aggregator</code></li>
+      <li><code>sudo /opt/termidesk/sbin/termidesk-config</code> → <b>«Настройки Агрегатора»</b> → <b>«Время жизни токена Агрегатора, секунд»</b> → новое значение</li>
+      <li>Или вручную: <code>/etc/opt/termidesk-vdi/termidesk.conf</code> → <code>AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS='300'</code></li>
+      <li><b>Обязательно</b> перезапуск: termidesk-config → «Перезапуск служб»</li>
+      <li>Проверка: <code>grep AGGREGATOR_ACCESS_TOKEN_TTL /etc/opt/termidesk-vdi/termidesk.conf</code></li>
+    </ol>
+    <div class="cmd-block"><code id="cmd-check-aggr-ttl">grep AGGREGATOR_ACCESS_TOKEN_TTL /etc/opt/termidesk-vdi/termidesk.conf</code><button type="button" class="btn-copy" data-copy="cmd-check-aggr-ttl" data-copy-label="Копировать команду">Копировать команду</button></div>
+    <p class="meta">Это JWT для <code>/api/auth/v7.0/jwtauth</code> (Агрегатор↔диспетчер), <b>не</b> тот же токен, что из <code>/login</code> диспетчера. Подробнее: <a href="#param-api-token-ttl" class="param-jump">карточка AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS</a></p>
+    <div class="shot-uploader" data-shot="api-token"><label class="shot-label">📷 Скриншот: termidesk-config → TTL Агрегатора или портал → длительность сессии admin<input type="file" accept="image/*" hidden></label><div class="shot-preview"></div></div>
   </div>
   <label class="done-check"><input type="checkbox" data-store="tab-session"> Проверено на стенде</label>
 </section>
@@ -1500,8 +1526,8 @@ grep -q &quot;HEALTH_CHECK_ACCESS_KEY=''&quot; /etc/opt/termidesk-vdi/termidesk.
   
   <p class="alert">⚠️ См. раздел «Сессии/API» (неактивность, TTL токена).</p>
   <h3>Шаги</h3>
-  <ol class="steps"><li>См. раздел «Сессии/API» — TTL API-токена</li><li>Зафиксируйте фактическое время жизни Bearer-токена</li></ol>
-  <div class="shot-uploader" data-shot="ib-44-1"><label class="shot-label">📷 Проверка TTL после /api/auth/v7.0/login<input type="file" accept="image/*" hidden></label><div class="shot-preview"></div></div>
+  <ol class="steps"><li>Токен POST /api/auth/v7.0/login (X-Auth-Token): портал → Системные параметры → Безопасность → «Длительность сессии администратора, с»</li><li>Если есть Агрегатор: AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS на узле Агрегатора через termidesk-config или termidesk.conf</li><li>После изменения — перезапуск служб; проверьте 401 после истечения TTL</li><li>Отзыв: /api/auth/v7.0/legacy/logout</li></ol>
+  <div class="shot-uploader" data-shot="ib-44-1"><label class="shot-label">📷 Портал: «Длительность сессии администратора, с»<input type="file" accept="image/*" hidden></label><div class="shot-preview"></div></div><div class="shot-uploader" data-shot="ib-44-2"><label class="shot-label">📷 termidesk.conf на Агрегаторе: AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS<input type="file" accept="image/*" hidden></label><div class="shot-preview"></div></div><div class="shot-uploader" data-shot="ib-44-3"><label class="shot-label">📷 401 на API после истечения срока<input type="file" accept="image/*" hidden></label><div class="shot-preview"></div></div>
   <p class="meta">Автоматический скрипт не требуется — ручная проверка или документ.</p>
   <div class="result-box">✓ Ожидаемый результат: Срок действия токена определён и согласован</div>
   <label class="done-check"><input type="checkbox" data-store="ib-44"> Выполнено — в протоколе</label>

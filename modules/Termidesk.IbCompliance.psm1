@@ -374,10 +374,29 @@ function Export-TermideskIbComplianceHtml {
     <div class="shot-uploader" data-shot="sess-timeout"><label class="shot-label">📷 Скриншот: настройка таймаута сессии<input type="file" accept="image/*" hidden></label><div class="shot-preview"></div></div>
   </div>
   <div class="card warn-card">
-    <h3>Срок действия API-токена</h3>
-    <p>Параметры: <code>AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS</code> (по умолчанию 600), login API <code>/api/auth/v7.0/login</code>.</p>
-    <p><strong>Требует уточнения на стенде:</strong> web-сессия может разрываться, а Bearer-токен жить до своего TTL. Зафиксируйте фактическое время жизни и согласуйте меры (уменьшение TTL, отзыв, повторный login).</p>
-    <div class="shot-uploader" data-shot="api-token"><label class="shot-label">📷 Скриншот: проверка TTL токена после login<input type="file" accept="image/*" hidden></label><div class="shot-preview"></div></div>
+    <h3>Срок действия API-токена — два разных механизма</h3>
+    <p><strong>Важно:</strong> в гайде раньше смешивались разные токены. Ниже — что менять в вашем случае.</p>
+    <h4>A. Токен REST API диспетчера (<code>X-Auth-Token</code> после <code>/api/auth/v7.0/login</code>)</h4>
+    <p>Меняется <b>в веб-портале администратора</b>, не в <code>termidesk.conf</code>:</p>
+    <ol class="steps">
+      <li>$portal → <b>Настройки → Системные параметры → Безопасность</b></li>
+      <li>Параметр <b>«Длительность сессии администратора, с»</b> — задайте срок в секундах (например <code>1800</code>)</li>
+      <li>Сохраните; выполните <code>POST /api/auth/v7.0/login</code> и проверьте, когда тот же <code>X-Auth-Token</code> начнёт отдавать 401</li>
+      <li>Отозвать вручную: <code>GET</code> или <code>POST /api/auth/v7.0/legacy/logout</code> с заголовком <code>X-Auth-Token</code></li>
+    </ol>
+    <p class="meta">Подробнее: <a href="#param-api-x-auth-token" class="param-jump">карточка X-Auth-Token</a></p>
+    <h4>B. JWT Агрегатора (<code>AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS</code>, по умолчанию 600)</h4>
+    <p>Только если в архитектуре есть <b>Агрегатор</b>. Меняется <b>на узле Агрегатора</b>:</p>
+    <ol class="steps">
+      <li>SSH на узел с <code>TERMIDESK_FARM_MODE=aggregator</code></li>
+      <li><code>sudo /opt/termidesk/sbin/termidesk-config</code> → <b>«Настройки Агрегатора»</b> → <b>«Время жизни токена Агрегатора, секунд»</b> → новое значение</li>
+      <li>Или вручную: <code>/etc/opt/termidesk-vdi/termidesk.conf</code> → <code>AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS='300'</code></li>
+      <li><b>Обязательно</b> перезапуск: termidesk-config → «Перезапуск служб»</li>
+      <li>Проверка: <code>grep AGGREGATOR_ACCESS_TOKEN_TTL /etc/opt/termidesk-vdi/termidesk.conf</code></li>
+    </ol>
+    <div class="cmd-block"><code id="cmd-check-aggr-ttl">grep AGGREGATOR_ACCESS_TOKEN_TTL /etc/opt/termidesk-vdi/termidesk.conf</code><button type="button" class="btn-copy" data-copy="cmd-check-aggr-ttl" data-copy-label="Копировать команду">Копировать команду</button></div>
+    <p class="meta">Это JWT для <code>/api/auth/v7.0/jwtauth</code> (Агрегатор↔диспетчер), <b>не</b> тот же токен, что из <code>/login</code> диспетчера. Подробнее: <a href="#param-api-token-ttl" class="param-jump">карточка AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS</a></p>
+    <div class="shot-uploader" data-shot="api-token"><label class="shot-label">📷 Скриншот: termidesk-config → TTL Агрегатора или портал → длительность сессии admin<input type="file" accept="image/*" hidden></label><div class="shot-preview"></div></div>
   </div>
   <label class="done-check"><input type="checkbox" data-store="tab-session"> Проверено на стенде</label>
 </section>

@@ -249,3 +249,140 @@ function Get-TermideskSkScenarios {
     }
     return $result
 }
+
+function Get-TermideskParameterGuide {
+    param([object]$Settings)
+    $portal = if ($Settings -and $Settings.portal.url) { $Settings.portal.url } else { 'https://portal.example.ru' }
+    @(
+        @{ Slug='dbpass'; Group='Пароли и секреты'; Name='DBPASS'; Ib='ИБ-103, ИБ-117, ИБ-118'
+            Where=@('Linux: /etc/opt/termidesk-vdi/termidesk.conf → DBPASS','CLI: sudo /opt/termidesk/sbin/termidesk-config → «Настройка подключения к СУБД»','Windows-панель: config/termidesk-settings.json → database.password','OpenBao: секрет SECRETS_OPENBAO_DB_PATH')
+            How=@('Смените пароль в PostgreSQL: sudo bash output/03-database/02-change-password.sh ''NovyjParol''','На каждом диспетчере и CeleryMan задайте DBPASS через termidesk-config (scramble)','Обновите database.password в JSON при использовании [18]','Перезапуск: termidesk-config → «Перезапуск служб»') }
+        @{ Slug='rabbitmq-pass'; Group='Пароли и секреты'; Name='RABBITMQ_PASS'; Ib='ИБ-103, ИБ-118'
+            Where=@('termidesk.conf → RABBITMQ_PASS','termidesk-config → «Настройка подключения к RabbitMQ»','JSON: rabbitmq.password')
+            How=@('Смените пароль брокера: output/04-rabbitmq/02-change-password.sh','Обновите RABBITMQ_PASS на всех диспетчерах','Синхронизируйте coordinatorPass на шлюзах','Перезапуск termidesk-vdi') }
+        @{ Slug='coordinator-pass'; Group='Пароли и секреты'; Name='coordinatorPass'; Ib='ИБ-103'
+            Where=@('termidesk.conf на шлюзе','JSON: gateway.coordinatorPass','termidesk-config на шлюзе')
+            How=@('Тот же пароль, что у RABBITMQ_PASS','Проверьте coordinatorUrl','Перезапуск служб шлюза') }
+        @{ Slug='health-key'; Group='Пароли и секреты'; Name='HEALTH_CHECK_ACCESS_KEY'; Ib='ИБ-101, ИБ-103'
+            Where=@('termidesk.conf → HEALTH_CHECK_ACCESS_KEY','termidesk-config → Health Check','JSON: monitoring.healthCheckAccessKey')
+            How=@('Сгенерируйте случайную строку ≥32 символов','Задайте через termidesk-config','Проверьте GET /api/health/?key=...') }
+        @{ Slug='metrics-key'; Group='Пароли и секреты'; Name='METRICS_ACCESS_KEY'; Ib='ИБ-101'
+            Where=@('termidesk.conf → METRICS_ACCESS_KEY','JSON: monitoring.metricsAccessKey')
+            How=@('Задайте ключ как HEALTH_CHECK_ACCESS_KEY','Проверьте /api/health/metrics') }
+        @{ Slug='admin-password'; Group='Пароли и секреты'; Name='Пароль admin портала'; Ib='ИБ-103, ИБ-11…22'
+            Where=@("Портал $portal → профиль admin → смена пароля",'Портал → Пользователи → admin')
+            How=@('Смените пароль (не example из шаблона)','Проверьте политику паролей ИБ-16…21') }
+
+        @{ Slug='dbhost'; Group='PostgreSQL / СУБД'; Name='DBHOST, DBHOST2, DBHOST3'; Ib='ИБ-112'
+            Where=@('termidesk.conf → DBHOST*','termidesk-config → СУБД','JSON: database.host(s)','output/03-database/cluster-notes.txt')
+            How=@('VIP Patroni или адреса узлов','DB_CLUSTER_MODE=cluster для HA','Перезапуск termidesk-vdi') }
+        @{ Slug='db-cluster'; Group='PostgreSQL / СУБД'; Name='DB_CLUSTER_MODE'; Ib='ИБ-112'
+            Where=@('termidesk.conf','termidesk-config → тип СУБД','JSON: database.clusterMode')
+            How=@('standalone / cluster по архитектуре','Согласуйте с 01-postgresql-setup.sh') }
+        @{ Slug='pg-hba'; Group='PostgreSQL / СУБД'; Name='pg_hba.conf (scram-sha-256)'; Ib='ИБ-117'
+            Where=@('/etc/postgresql/*/main/pg_hba.conf','output/03-database/pg_hba.conf.snippet')
+            How=@('host ... scram-sha-256','CIDR только подсеть приложений','reload postgresql','ib-117-check-password-storage.sh') }
+        @{ Slug='dbcert'; Group='PostgreSQL / СУБД'; Name='DBCERT'; Ib='ИБ-123'
+            Where=@('termidesk.conf → DBCERT','JSON: database.sslCertPath')
+            How=@('Путь к CA/cert для TLS до PostgreSQL','Перезапуск termidesk-vdi') }
+
+        @{ Slug='rmq-host'; Group='RabbitMQ'; Name='RABBITMQ_HOST, PORT, USER'; Ib='ИБ-102, ИБ-115'
+            Where=@('termidesk.conf','termidesk-config → RabbitMQ','JSON: rabbitmq.*')
+            How=@('Адрес кластера/VIP','Порт 5672 (5671 TLS)','Firewall только из app-сегмента') }
+        @{ Slug='tmq'; Group='TermideskMQ'; Name='TMQ_*'; Ib='ИБ-102'
+            Where=@('termidesk.conf (NODE_ROLES=TERMQ)','output/04-rabbitmq/termidesk.conf.tmq')
+            How=@('termidesk-config → TermideskMQ','Перезапуск после изменения') }
+
+        @{ Slug='ldap-domain'; Group='Портал — идентификация'; Name='Домены LDAP/OIDC/SAML'; Ib='ИБ-24…28, ИБ-35'
+            Where=@('Портал → Аутентификация → Домены','output/12-domains/')
+            How=@('Создайте домен LDAPS/OIDC/SAML','Привяжите к группам','Проверьте SSO/MFA') }
+        @{ Slug='x509-domain'; Group='Портал — идентификация'; Name='Домен X.509'; Ib='ИБ-14, ИБ-120'
+            Where=@('Портал → Домены → X.509','Раздел «Сертификаты» в этом HTML')
+            How=@('mTLS на диспетчере','Домен X.509 + сопоставление DN/CN','Вход с user.p12') }
+        @{ Slug='password-policy'; Group='Портал — идентификация'; Name='Парольная политика'; Ib='ИБ-16…21'
+            Where=@('Портал → Система → Системные настройки → безопасность')
+            How=@('Сложность, срок, история, блокировка, первый вход') }
+        @{ Slug='rbac'; Group='Портал — доступ'; Name='Роли и группы'; Ib='ИБ-29…42'
+            Where=@('Портал → Пользователи → Группы/Роли','API + termidesk-config CLI')
+            How=@('Минимальные права (ИБ-34)','Наследование LDAP (ИБ-35)','Без анонимного UI/API') }
+
+        @{ Slug='session-timeout'; Group='Сессии и API'; Name='Таймаут неактивности'; Ib='ИБ-43'
+            Where=@('Портал → Системные настройки → сессии','Политики Connect')
+            How=@('Задайте таймаут','Проверьте повторный login после простоя','tab-session') }
+        @{ Slug='api-token-ttl'; Group='Сессии и API'; Name='AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS'; Ib='ИБ-44, ИБ-12, ИБ-13'
+            Where=@('termidesk.conf','POST /api/auth/v7.0/login')
+            How=@('TTL в секундах (default 600)','Проверьте жизнь Bearer-токена','Зафиксируйте расхождение с web-сессией') }
+
+        @{ Slug='internal-audit'; Group='Аудит'; Name='INTERNAL_AUDIT'; Ib='ИБ-45…97'
+            Where=@('termidesk.conf','termidesk-config → Fluentd')
+            How=@('INTERNAL_AUDIT=True','/var/log/termidesk/audit.log отдельно от syslog') }
+        @{ Slug='log-deep'; Group='Аудит'; Name='LOG_DEEP, LOG_DIR'; Ib='ИБ-90…92'
+            Where=@('termidesk.conf','Портал → Аудит → архивные файлы (7-30)')
+            How=@('LOG_DEEP + ротация','Включить сохранение в файл','ib-92-check-log-rotation.sh') }
+        @{ Slug='syslog'; Group='Аудит'; Name='Syslog → SIEM'; Ib='ИБ-95'
+            Where=@('Портал → Аудит → Syslog','configure-audit-syslog.sh')
+            How=@('Хост/порт SIEM','Скрипт на диспетчере','Событие на SIEM') }
+
+        @{ Slug='mtls'; Group='TLS / mTLS'; Name='MTLS_MODE, MTLS_*'; Ib='ИБ-119…125'
+            Where=@('termidesk.conf','termidesk-config → Сертификаты','/etc/opt/termidesk-vdi/mtls/','apache-mtls-snippet.conf')
+            How=@('generate-user-certificate.sh','MTLS_MODE=on','Apache X-TDSK-SSL-CLIENT-*','Перезапуск') }
+        @{ Slug='nginx-ssl'; Group='TLS / mTLS'; Name='TLS на VIP (nginx)'; Ib='ИБ-119, ИБ-121'
+            Where=@('nginx ssl_* на LB','JSON cluster.tls','output/10-ssl/, output/09-nginx/')
+            How=@('TLSv1.2+','Корпоративный cert','ib-119-check-tls.sh') }
+
+        @{ Slug='farm-mode'; Group='Кластер и узлы'; Name='TERMIDESK_FARM_MODE, NODE_ROLES'; Ib='ИБ-112, ИБ-10'
+            Where=@('termidesk.conf','termidesk-config → режим и роли','JSON [18]')
+            How=@('FARM_MODE standalone/cluster','NODE_ROLES ADMIN,USER,CELERYMAN,TERMQ') }
+        @{ Slug='secrets-storage'; Group='Кластер и узлы'; Name='config / hvac / openbao'; Ib='ИБ-103'
+            Where=@('termidesk-config → хранение паролей','JSON openbao.*','output/05-openbao/')
+            How=@('Выбор config или OpenBao','migrate-to-openbao.sh при миграции') }
+        @{ Slug='gateway'; Group='Шлюз'; Name='coordinatorUrl, websockify'; Ib='ИБ-102, ИБ-115'
+            Where=@('termidesk.conf шлюза','JSON gateway.*','[18] шлюзы')
+            How=@('coordinatorUrl на диспетчер','Порты LB↔шлюз','VIP:443 для клиентов') }
+        @{ Slug='json-template'; Group='JSON (Windows)'; Name='termidesk-settings.json'; Ib='ИБ-107, все'
+            Where=@('config/termidesk-settings.json','ГАЙД-ШАБЛОН-JSON.html','Мастер [18]')
+            How=@('Разделы 4.1–4.13 гайда','[A] перегенерация артефактов','Без паролей в git') }
+    )
+}
+
+function New-TermideskHtmlParameterGuidePanel {
+    param([object]$Settings)
+    $params = @(Get-TermideskParameterGuide -Settings $Settings)
+    $groups = $params | ForEach-Object { $_.Group } | Select-Object -Unique
+    $sb = New-Object System.Text.StringBuilder
+    [void]$sb.AppendLine(@"
+<section id="tab-params" class="panel" data-title="Справочник параметров">
+  <div class="panel-head"><h2>Справочник параметров — где найти и как изменить</h2><p class="lead">Для каждого параметра указаны все типичные места (портал, termidesk.conf, JSON, скрипты) и порядок изменения. Ищите по имени через строку поиска вверху.</p></div>
+  <div class="param-toc">
+"@)
+    foreach ($g in $groups) {
+        $gid = ($g -replace '[^a-zA-Zа-яА-Я0-9]','-').ToLower()
+        [void]$sb.AppendLine("    <a href=""#param-grp-$gid"" class=""param-jump"">$g</a>")
+    }
+    [void]$sb.AppendLine('  </div>')
+    $currentGroup = ''
+    foreach ($p in $params) {
+        if ($p.Group -ne $currentGroup) {
+            $currentGroup = $p.Group
+            $gid = ($currentGroup -replace '[^a-zA-Zа-яА-Я0-9]','-').ToLower()
+            [void]$sb.AppendLine("<h3 id=""param-grp-$gid"" class=""param-group-title"">$currentGroup</h3>")
+        }
+        $nameEnc = ConvertTo-TermideskHtmlEncode $p.Name
+        $ibEnc = ConvertTo-TermideskHtmlEncode $p.Ib
+        $whereHtml = ($p.Where | ForEach-Object { "<li>$(ConvertTo-TermideskHtmlEncode $_)</li>" }) -join ''
+        $howHtml = ($p.How | ForEach-Object { "<li>$(ConvertTo-TermideskHtmlEncode $_)</li>" }) -join ''
+        $searchText = ConvertTo-TermideskHtmlEncode "$($p.Name) $($p.Ib) $currentGroup $($p.Slug)"
+        [void]$sb.AppendLine(@"
+  <div class="param-card" id="param-$($p.Slug)" data-search="$searchText">
+    <div class="param-head"><code>$nameEnc</code><span class="tag tag-muted">$ibEnc</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where">$whereHtml</ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how">$howHtml</ol>
+  </div>
+"@)
+    }
+    [void]$sb.AppendLine('  <label class="done-check"><input type="checkbox" data-store="tab-params"> Справочник параметров изучен</label>')
+    [void]$sb.AppendLine('</section>')
+    return $sb.ToString()
+}

@@ -82,6 +82,17 @@ code{font-family:Consolas,monospace;font-size:.86em;background:rgba(255,255,255,
 .alert{color:var(--warn);font-size:.9rem;margin:.5rem 0}
 .done-check{display:flex;align-items:center;gap:.5rem;margin-top:1.25rem;padding:.75rem;background:rgba(255,255,255,.03);border-radius:10px;cursor:pointer}
 .done-check input{width:18px;height:18px;accent-color:var(--ok)}
+.param-toc{display:flex;flex-wrap:wrap;gap:.4rem;margin:1rem 0}
+.param-toc a,.param-jump{font-size:.78rem;padding:.25rem .55rem;border:1px solid var(--border);border-radius:8px;color:var(--muted);text-decoration:none}
+.param-toc a:hover{color:var(--accent);border-color:var(--accent)}
+.param-group-title{margin:1.25rem 0 .5rem;font-size:.95rem;color:var(--warn);border-bottom:1px solid var(--border);padding-bottom:.35rem}
+.param-card{border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem;margin:.75rem 0;background:rgba(255,255,255,.02)}
+.param-head{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.5rem}
+.param-head code{font-size:.95rem;color:var(--accent);background:none;padding:0}
+.param-card h4{margin:.65rem 0 .3rem;font-size:.78rem;color:var(--warn);text-transform:uppercase;letter-spacing:.04em}
+.param-where{margin:.25rem 0 .5rem;padding-left:1.2rem;font-size:.88rem}
+.param-where li{margin:.25rem 0}
+.param-how{margin-bottom:0}
 .nav-footer{position:fixed;bottom:0;left:var(--sidebar-w);right:0;display:flex;justify-content:space-between;padding:.75rem 1.5rem;background:rgba(18,24,32,.95);border-top:1px solid var(--border);backdrop-filter:blur(8px);z-index:15}
 .nav-footer button{padding:.55rem 1.1rem;border-radius:10px;border:1px solid var(--border);background:var(--panel);color:var(--text)}
 .nav-footer button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -106,6 +117,7 @@ code{font-family:Consolas,monospace;font-size:.86em;background:rgba(255,255,255,
 <aside class="sidebar" id="sidebar">
   <nav><ul id="navList">
       <li><a href="#tab-home" data-tab="tab-home" class="active"><span class="nav-id">🏠 Старт</span><span class="nav-dot"></span></a></li>
+      <li><a href="#tab-params" data-tab="tab-params"><span class="nav-id">📖 Параметры</span><span class="nav-dot"></span></a></li>
       <li><a href="#tab-pwd" data-tab="tab-pwd"><span class="nav-id">🔑 Пароли</span><span class="nav-dot"></span></a></li>
       <li><a href="#tab-session" data-tab="tab-session"><span class="nav-id">⏱ Сессии/API</span><span class="nav-dot"></span></a></li>
       <li><a href="#tab-cert" data-tab="tab-cert"><span class="nav-id">🔐 Сертификаты</span><span class="nav-dot"></span></a></li>
@@ -299,7 +311,7 @@ code{font-family:Consolas,monospace;font-size:.86em;background:rgba(255,255,255,
 </aside>
 <main class="content" id="content">
 <section id="tab-home" class="panel active" data-title="Старт">
-  <div class="panel-head"><h2>Апробирование Termidesk 7.0</h2><p class="lead">Один файл: пароли, сертификаты, сессии/API, полный перечень ИБ-1…132 и СК-1…25 — шаги, скриншоты и скрипты.</p></div>
+  <div class="panel-head"><h2>Апробирование Termidesk 7.0</h2><p class="lead">Один файл: справочник параметров, пароли, сертификаты, сессии/API, ИБ-1…132 и СК-1…25.</p></div>
   <div class="stat-grid">
     <div class="stat-card"><div class="stat-num" id="statTotal">132</div><div class="stat-label">требований ИБ</div></div>
     <div class="stat-card"><div class="stat-num">25</div><div class="stat-label">проверок СК</div></div>
@@ -309,17 +321,238 @@ code{font-family:Consolas,monospace;font-size:.86em;background:rgba(255,255,255,
   <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
   <h3>С чего начать</h3>
   <div class="quick-grid">
-    <button type="button" class="quick-card" data-goto="tab-pwd"><span class="qc-icon">🔑</span><strong>1. Замена паролей</strong><span>PostgreSQL, RabbitMQ, admin, ключи</span></button>
-    <button type="button" class="quick-card" data-goto="tab-cert"><span class="qc-icon">🔐</span><strong>3. Сертификаты mTLS</strong><span>Выпуск cert, домен X.509</span></button>
-    <button type="button" class="quick-card" data-goto="tab-session"><span class="qc-icon">⏱</span><strong>4. Сессии и API</strong><span>Неактивность, TTL токена</span></button>
-    <button type="button" class="quick-card" data-goto="ib-1"><span class="qc-icon">📋</span><strong>5. ИБ-1…132</strong><span>Все требования по категориям</span></button>
-    <button type="button" class="quick-card" data-goto="sk-1"><span class="qc-icon">🖥</span><strong>6. СК-1…25</strong><span>Astra Linux, клиенты</span></button>
+    <button type="button" class="quick-card" data-goto="tab-params"><span class="qc-icon">📖</span><strong>2. Справочник параметров</strong><span>Где найти и как изменить</span></button>
+    <button type="button" class="quick-card" data-goto="tab-pwd"><span class="qc-icon">🔑</span><strong>3. Замена паролей</strong><span>PostgreSQL, RabbitMQ, admin</span></button>
+    <button type="button" class="quick-card" data-goto="tab-cert"><span class="qc-icon">🔐</span><strong>4. Сертификаты mTLS</strong><span>Выпуск cert, домен X.509</span></button>
+    <button type="button" class="quick-card" data-goto="tab-session"><span class="qc-icon">⏱</span><strong>5. Сессии и API</strong><span>Неактивность, TTL токена</span></button>
+    <button type="button" class="quick-card" data-goto="ib-1"><span class="qc-icon">📋</span><strong>6. ИБ-1…132</strong><span>Все требования по категориям</span></button>
+    <button type="button" class="quick-card" data-goto="sk-1"><span class="qc-icon">🖥</span><strong>7. СК-1…25</strong><span>Astra Linux, клиенты</span></button>
   </div>
   <p class="meta">Скрипты на диске: <code>output/19-ib-compliance/scripts/</code> · генерация: меню <kbd>[19]→2</kbd> или <kbd>[A]</kbd></p>
   <p class="meta">Портал стенда: <code></code></p>
 </section>
+<section id="tab-params" class="panel" data-title="Справочник параметров">
+  <div class="panel-head"><h2>Справочник параметров — где найти и как изменить</h2><p class="lead">Для каждого параметра указаны все типичные места (портал, termidesk.conf, JSON, скрипты) и порядок изменения. Ищите по имени через строку поиска вверху.</p></div>
+  <div class="param-toc">
+    <a href="#param-grp-пароли-и-секреты" class="param-jump">Пароли и секреты</a>
+    <a href="#param-grp-postgresql---субд" class="param-jump">PostgreSQL / СУБД</a>
+    <a href="#param-grp-rabbitmq" class="param-jump">RabbitMQ</a>
+    <a href="#param-grp-termideskmq" class="param-jump">TermideskMQ</a>
+    <a href="#param-grp-портал---идентификация" class="param-jump">Портал — идентификация</a>
+    <a href="#param-grp-портал---доступ" class="param-jump">Портал — доступ</a>
+    <a href="#param-grp-сессии-и-api" class="param-jump">Сессии и API</a>
+    <a href="#param-grp-аудит" class="param-jump">Аудит</a>
+    <a href="#param-grp-tls---mtls" class="param-jump">TLS / mTLS</a>
+    <a href="#param-grp-кластер-и-узлы" class="param-jump">Кластер и узлы</a>
+    <a href="#param-grp-шлюз" class="param-jump">Шлюз</a>
+    <a href="#param-grp-json--windows-" class="param-jump">JSON (Windows)</a>
+  </div>
+<h3 id="param-grp-пароли-и-секреты" class="param-group-title">Пароли и секреты</h3>
+  <div class="param-card" id="param-dbpass" data-search="DBPASS ИБ-103, ИБ-117, ИБ-118 Пароли и секреты dbpass">
+    <div class="param-head"><code>DBPASS</code><span class="tag tag-muted">ИБ-103, ИБ-117, ИБ-118</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>Linux: /etc/opt/termidesk-vdi/termidesk.conf → DBPASS</li><li>CLI: sudo /opt/termidesk/sbin/termidesk-config → «Настройка подключения к СУБД»</li><li>Windows-панель: config/termidesk-settings.json → database.password</li><li>OpenBao: секрет SECRETS_OPENBAO_DB_PATH</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>Смените пароль в PostgreSQL: sudo bash output/03-database/02-change-password.sh 'NovyjParol'</li><li>На каждом диспетчере и CeleryMan задайте DBPASS через termidesk-config (scramble)</li><li>Обновите database.password в JSON при использовании [18]</li><li>Перезапуск: termidesk-config → «Перезапуск служб»</li></ol>
+  </div>
+  <div class="param-card" id="param-rabbitmq-pass" data-search="RABBITMQ_PASS ИБ-103, ИБ-118 Пароли и секреты rabbitmq-pass">
+    <div class="param-head"><code>RABBITMQ_PASS</code><span class="tag tag-muted">ИБ-103, ИБ-118</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>termidesk.conf → RABBITMQ_PASS</li><li>termidesk-config → «Настройка подключения к RabbitMQ»</li><li>JSON: rabbitmq.password</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>Смените пароль брокера: output/04-rabbitmq/02-change-password.sh</li><li>Обновите RABBITMQ_PASS на всех диспетчерах</li><li>Синхронизируйте coordinatorPass на шлюзах</li><li>Перезапуск termidesk-vdi</li></ol>
+  </div>
+  <div class="param-card" id="param-coordinator-pass" data-search="coordinatorPass ИБ-103 Пароли и секреты coordinator-pass">
+    <div class="param-head"><code>coordinatorPass</code><span class="tag tag-muted">ИБ-103</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>termidesk.conf на шлюзе</li><li>JSON: gateway.coordinatorPass</li><li>termidesk-config на шлюзе</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>Тот же пароль, что у RABBITMQ_PASS</li><li>Проверьте coordinatorUrl</li><li>Перезапуск служб шлюза</li></ol>
+  </div>
+  <div class="param-card" id="param-health-key" data-search="HEALTH_CHECK_ACCESS_KEY ИБ-101, ИБ-103 Пароли и секреты health-key">
+    <div class="param-head"><code>HEALTH_CHECK_ACCESS_KEY</code><span class="tag tag-muted">ИБ-101, ИБ-103</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>termidesk.conf → HEALTH_CHECK_ACCESS_KEY</li><li>termidesk-config → Health Check</li><li>JSON: monitoring.healthCheckAccessKey</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>Сгенерируйте случайную строку ≥32 символов</li><li>Задайте через termidesk-config</li><li>Проверьте GET /api/health/?key=...</li></ol>
+  </div>
+  <div class="param-card" id="param-metrics-key" data-search="METRICS_ACCESS_KEY ИБ-101 Пароли и секреты metrics-key">
+    <div class="param-head"><code>METRICS_ACCESS_KEY</code><span class="tag tag-muted">ИБ-101</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>termidesk.conf → METRICS_ACCESS_KEY</li><li>JSON: monitoring.metricsAccessKey</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>Задайте ключ как HEALTH_CHECK_ACCESS_KEY</li><li>Проверьте /api/health/metrics</li></ol>
+  </div>
+  <div class="param-card" id="param-admin-password" data-search="Пароль admin портала ИБ-103, ИБ-11…22 Пароли и секреты admin-password">
+    <div class="param-head"><code>Пароль admin портала</code><span class="tag tag-muted">ИБ-103, ИБ-11…22</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>Портал https://portal.example.ru → профиль admin → смена пароля</li><li>Портал → Пользователи → admin</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>Смените пароль (не example из шаблона)</li><li>Проверьте политику паролей ИБ-16…21</li></ol>
+  </div>
+<h3 id="param-grp-postgresql---субд" class="param-group-title">PostgreSQL / СУБД</h3>
+  <div class="param-card" id="param-dbhost" data-search="DBHOST, DBHOST2, DBHOST3 ИБ-112 PostgreSQL / СУБД dbhost">
+    <div class="param-head"><code>DBHOST, DBHOST2, DBHOST3</code><span class="tag tag-muted">ИБ-112</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>termidesk.conf → DBHOST*</li><li>termidesk-config → СУБД</li><li>JSON: database.host(s)</li><li>output/03-database/cluster-notes.txt</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>VIP Patroni или адреса узлов</li><li>DB_CLUSTER_MODE=cluster для HA</li><li>Перезапуск termidesk-vdi</li></ol>
+  </div>
+  <div class="param-card" id="param-db-cluster" data-search="DB_CLUSTER_MODE ИБ-112 PostgreSQL / СУБД db-cluster">
+    <div class="param-head"><code>DB_CLUSTER_MODE</code><span class="tag tag-muted">ИБ-112</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>termidesk.conf</li><li>termidesk-config → тип СУБД</li><li>JSON: database.clusterMode</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>standalone / cluster по архитектуре</li><li>Согласуйте с 01-postgresql-setup.sh</li></ol>
+  </div>
+  <div class="param-card" id="param-pg-hba" data-search="pg_hba.conf (scram-sha-256) ИБ-117 PostgreSQL / СУБД pg-hba">
+    <div class="param-head"><code>pg_hba.conf (scram-sha-256)</code><span class="tag tag-muted">ИБ-117</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>/etc/postgresql/*/main/pg_hba.conf</li><li>output/03-database/pg_hba.conf.snippet</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>host ... scram-sha-256</li><li>CIDR только подсеть приложений</li><li>reload postgresql</li><li>ib-117-check-password-storage.sh</li></ol>
+  </div>
+  <div class="param-card" id="param-dbcert" data-search="DBCERT ИБ-123 PostgreSQL / СУБД dbcert">
+    <div class="param-head"><code>DBCERT</code><span class="tag tag-muted">ИБ-123</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>termidesk.conf → DBCERT</li><li>JSON: database.sslCertPath</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>Путь к CA/cert для TLS до PostgreSQL</li><li>Перезапуск termidesk-vdi</li></ol>
+  </div>
+<h3 id="param-grp-rabbitmq" class="param-group-title">RabbitMQ</h3>
+  <div class="param-card" id="param-rmq-host" data-search="RABBITMQ_HOST, PORT, USER ИБ-102, ИБ-115 RabbitMQ rmq-host">
+    <div class="param-head"><code>RABBITMQ_HOST, PORT, USER</code><span class="tag tag-muted">ИБ-102, ИБ-115</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>termidesk.conf</li><li>termidesk-config → RabbitMQ</li><li>JSON: rabbitmq.*</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>Адрес кластера/VIP</li><li>Порт 5672 (5671 TLS)</li><li>Firewall только из app-сегмента</li></ol>
+  </div>
+<h3 id="param-grp-termideskmq" class="param-group-title">TermideskMQ</h3>
+  <div class="param-card" id="param-tmq" data-search="TMQ_* ИБ-102 TermideskMQ tmq">
+    <div class="param-head"><code>TMQ_*</code><span class="tag tag-muted">ИБ-102</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>termidesk.conf (NODE_ROLES=TERMQ)</li><li>output/04-rabbitmq/termidesk.conf.tmq</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>termidesk-config → TermideskMQ</li><li>Перезапуск после изменения</li></ol>
+  </div>
+<h3 id="param-grp-портал---идентификация" class="param-group-title">Портал — идентификация</h3>
+  <div class="param-card" id="param-ldap-domain" data-search="Домены LDAP/OIDC/SAML ИБ-24…28, ИБ-35 Портал — идентификация ldap-domain">
+    <div class="param-head"><code>Домены LDAP/OIDC/SAML</code><span class="tag tag-muted">ИБ-24…28, ИБ-35</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>Портал → Аутентификация → Домены</li><li>output/12-domains/</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>Создайте домен LDAPS/OIDC/SAML</li><li>Привяжите к группам</li><li>Проверьте SSO/MFA</li></ol>
+  </div>
+  <div class="param-card" id="param-x509-domain" data-search="Домен X.509 ИБ-14, ИБ-120 Портал — идентификация x509-domain">
+    <div class="param-head"><code>Домен X.509</code><span class="tag tag-muted">ИБ-14, ИБ-120</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>Портал → Домены → X.509</li><li>Раздел «Сертификаты» в этом HTML</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>mTLS на диспетчере</li><li>Домен X.509 + сопоставление DN/CN</li><li>Вход с user.p12</li></ol>
+  </div>
+  <div class="param-card" id="param-password-policy" data-search="Парольная политика ИБ-16…21 Портал — идентификация password-policy">
+    <div class="param-head"><code>Парольная политика</code><span class="tag tag-muted">ИБ-16…21</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>Портал → Система → Системные настройки → безопасность</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>Сложность, срок, история, блокировка, первый вход</li></ol>
+  </div>
+<h3 id="param-grp-портал---доступ" class="param-group-title">Портал — доступ</h3>
+  <div class="param-card" id="param-rbac" data-search="Роли и группы ИБ-29…42 Портал — доступ rbac">
+    <div class="param-head"><code>Роли и группы</code><span class="tag tag-muted">ИБ-29…42</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>Портал → Пользователи → Группы/Роли</li><li>API + termidesk-config CLI</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>Минимальные права (ИБ-34)</li><li>Наследование LDAP (ИБ-35)</li><li>Без анонимного UI/API</li></ol>
+  </div>
+<h3 id="param-grp-сессии-и-api" class="param-group-title">Сессии и API</h3>
+  <div class="param-card" id="param-session-timeout" data-search="Таймаут неактивности ИБ-43 Сессии и API session-timeout">
+    <div class="param-head"><code>Таймаут неактивности</code><span class="tag tag-muted">ИБ-43</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>Портал → Системные настройки → сессии</li><li>Политики Connect</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>Задайте таймаут</li><li>Проверьте повторный login после простоя</li><li>tab-session</li></ol>
+  </div>
+  <div class="param-card" id="param-api-token-ttl" data-search="AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS ИБ-44, ИБ-12, ИБ-13 Сессии и API api-token-ttl">
+    <div class="param-head"><code>AGGREGATOR_ACCESS_TOKEN_TTL_SECONDS</code><span class="tag tag-muted">ИБ-44, ИБ-12, ИБ-13</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>termidesk.conf</li><li>POST /api/auth/v7.0/login</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>TTL в секундах (default 600)</li><li>Проверьте жизнь Bearer-токена</li><li>Зафиксируйте расхождение с web-сессией</li></ol>
+  </div>
+<h3 id="param-grp-аудит" class="param-group-title">Аудит</h3>
+  <div class="param-card" id="param-internal-audit" data-search="INTERNAL_AUDIT ИБ-45…97 Аудит internal-audit">
+    <div class="param-head"><code>INTERNAL_AUDIT</code><span class="tag tag-muted">ИБ-45…97</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>termidesk.conf</li><li>termidesk-config → Fluentd</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>INTERNAL_AUDIT=True</li><li>/var/log/termidesk/audit.log отдельно от syslog</li></ol>
+  </div>
+  <div class="param-card" id="param-log-deep" data-search="LOG_DEEP, LOG_DIR ИБ-90…92 Аудит log-deep">
+    <div class="param-head"><code>LOG_DEEP, LOG_DIR</code><span class="tag tag-muted">ИБ-90…92</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>termidesk.conf</li><li>Портал → Аудит → архивные файлы (7-30)</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>LOG_DEEP + ротация</li><li>Включить сохранение в файл</li><li>ib-92-check-log-rotation.sh</li></ol>
+  </div>
+  <div class="param-card" id="param-syslog" data-search="Syslog → SIEM ИБ-95 Аудит syslog">
+    <div class="param-head"><code>Syslog → SIEM</code><span class="tag tag-muted">ИБ-95</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>Портал → Аудит → Syslog</li><li>configure-audit-syslog.sh</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>Хост/порт SIEM</li><li>Скрипт на диспетчере</li><li>Событие на SIEM</li></ol>
+  </div>
+<h3 id="param-grp-tls---mtls" class="param-group-title">TLS / mTLS</h3>
+  <div class="param-card" id="param-mtls" data-search="MTLS_MODE, MTLS_* ИБ-119…125 TLS / mTLS mtls">
+    <div class="param-head"><code>MTLS_MODE, MTLS_*</code><span class="tag tag-muted">ИБ-119…125</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>termidesk.conf</li><li>termidesk-config → Сертификаты</li><li>/etc/opt/termidesk-vdi/mtls/</li><li>apache-mtls-snippet.conf</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>generate-user-certificate.sh</li><li>MTLS_MODE=on</li><li>Apache X-TDSK-SSL-CLIENT-*</li><li>Перезапуск</li></ol>
+  </div>
+  <div class="param-card" id="param-nginx-ssl" data-search="TLS на VIP (nginx) ИБ-119, ИБ-121 TLS / mTLS nginx-ssl">
+    <div class="param-head"><code>TLS на VIP (nginx)</code><span class="tag tag-muted">ИБ-119, ИБ-121</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>nginx ssl_* на LB</li><li>JSON cluster.tls</li><li>output/10-ssl/, output/09-nginx/</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>TLSv1.2+</li><li>Корпоративный cert</li><li>ib-119-check-tls.sh</li></ol>
+  </div>
+<h3 id="param-grp-кластер-и-узлы" class="param-group-title">Кластер и узлы</h3>
+  <div class="param-card" id="param-farm-mode" data-search="TERMIDESK_FARM_MODE, NODE_ROLES ИБ-112, ИБ-10 Кластер и узлы farm-mode">
+    <div class="param-head"><code>TERMIDESK_FARM_MODE, NODE_ROLES</code><span class="tag tag-muted">ИБ-112, ИБ-10</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>termidesk.conf</li><li>termidesk-config → режим и роли</li><li>JSON [18]</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>FARM_MODE standalone/cluster</li><li>NODE_ROLES ADMIN,USER,CELERYMAN,TERMQ</li></ol>
+  </div>
+  <div class="param-card" id="param-secrets-storage" data-search="config / hvac / openbao ИБ-103 Кластер и узлы secrets-storage">
+    <div class="param-head"><code>config / hvac / openbao</code><span class="tag tag-muted">ИБ-103</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>termidesk-config → хранение паролей</li><li>JSON openbao.*</li><li>output/05-openbao/</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>Выбор config или OpenBao</li><li>migrate-to-openbao.sh при миграции</li></ol>
+  </div>
+<h3 id="param-grp-шлюз" class="param-group-title">Шлюз</h3>
+  <div class="param-card" id="param-gateway" data-search="coordinatorUrl, websockify ИБ-102, ИБ-115 Шлюз gateway">
+    <div class="param-head"><code>coordinatorUrl, websockify</code><span class="tag tag-muted">ИБ-102, ИБ-115</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>termidesk.conf шлюза</li><li>JSON gateway.*</li><li>[18] шлюзы</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>coordinatorUrl на диспетчер</li><li>Порты LB↔шлюз</li><li>VIP:443 для клиентов</li></ol>
+  </div>
+<h3 id="param-grp-json--windows-" class="param-group-title">JSON (Windows)</h3>
+  <div class="param-card" id="param-json-template" data-search="termidesk-settings.json ИБ-107, все JSON (Windows) json-template">
+    <div class="param-head"><code>termidesk-settings.json</code><span class="tag tag-muted">ИБ-107, все</span></div>
+    <h4>Где найти</h4>
+    <ul class="param-where"><li>config/termidesk-settings.json</li><li>ГАЙД-ШАБЛОН-JSON.html</li><li>Мастер [18]</li></ul>
+    <h4>Как изменить</h4>
+    <ol class="steps param-how"><li>Разделы 4.1–4.13 гайда</li><li>[A] перегенерация артефактов</li><li>Без паролей в git</li></ol>
+  </div>
+  <label class="done-check"><input type="checkbox" data-store="tab-params"> Справочник параметров изучен</label>
+</section>
+
 <section id="tab-pwd" class="panel" data-title="Замена паролей">
-  <div class="panel-head"><span class="tag tag-warn">ИБ-103 · ИБ-117 · ИБ-118</span><h2>Замена паролей — где и как</h2></div>
+  <div class="panel-head"><span class="tag tag-warn">ИБ-103 · ИБ-117 · ИБ-118</span><h2>Замена паролей — где и как</h2><p class="meta">Подробный справочник всех параметров: раздел <a href="#tab-params" data-goto="tab-params">📖 Параметры</a></p></div>
   <div class="card">
     <h3>① PostgreSQL — параметр DBPASS</h3>
     <ol class="steps"><li>Панель <kbd>[3] → 4</kbd> (SSH) или на узле БД:</li></ol>
@@ -411,7 +644,7 @@ grep -q &quot;HEALTH_CHECK_ACCESS_KEY=''&quot; /etc/opt/termidesk-vdi/termidesk.
   <label class="done-check"><input type="checkbox" data-store="tab-pwd"> Все пароли заменены — отметить в протоколе</label>
 </section>
 <section id="tab-session" class="panel" data-title="Сессии и API">
-  <div class="panel-head"><h2>Сессии неактивности и срок API-токена</h2></div>
+  <div class="panel-head"><h2>Сессии неактивности и срок API-токена</h2><p class="meta">Параметры: <a href="#param-session-timeout" class="param-jump">таймаут сессии</a>, <a href="#param-api-token-ttl" class="param-jump">TTL API-токена</a> · <a href="#tab-params" data-goto="tab-params">полный справочник</a></p></div>
   <div class="card">
     <h3>Блокировка сессии по неактивности</h3>
     <p>Должна настраиваться длительность неактивности; восстановление — <b>только после повторной аутентификации</b>.</p>
@@ -431,7 +664,7 @@ grep -q &quot;HEALTH_CHECK_ACCESS_KEY=''&quot; /etc/opt/termidesk-vdi/termidesk.
   <label class="done-check"><input type="checkbox" data-store="tab-session"> Проверено на стенде</label>
 </section>
 <section id="tab-cert" class="panel" data-title="Сертификаты mTLS">
-  <div class="panel-head"><span class="tag">ИБ-120 · ИБ-125</span><h2>Сертификат пользователя и аутентификация по сертификату</h2></div>
+  <div class="panel-head"><span class="tag">ИБ-120 · ИБ-125</span><h2>Сертификат пользователя и аутентификация по сертификату</h2><p class="meta">Параметры: <a href="#param-mtls" class="param-jump">MTLS_*</a>, <a href="#param-x509-domain" class="param-jump">домен X.509</a> · <a href="#tab-params" data-goto="tab-params">полный справочник</a></p></div>
   <div class="card">
     <h3>① Выпуск сертификата пользователя</h3>
     <p>На эталонном диспетчере или PKI-узле (меню <kbd>[10]</kbd>):</p>
@@ -3728,7 +3961,7 @@ bash &quot;$DIR/check-integrity.sh&quot; &quot;${1:-/var/lib/termidesk/baseline.
 </footer>
 <script>
 (function(){
-  var ORDER=["tab-home","tab-pwd","tab-session","tab-cert","ib-1","ib-2","ib-3","ib-4","ib-5","ib-6","ib-7","ib-8","ib-9","ib-10","ib-11","ib-12","ib-13","ib-14","ib-15","ib-16","ib-17","ib-18","ib-19","ib-20","ib-21","ib-22","ib-23","ib-24","ib-25","ib-26","ib-27","ib-28","ib-29","ib-30","ib-31","ib-32","ib-33","ib-34","ib-35","ib-36","ib-37","ib-38","ib-39","ib-40","ib-41","ib-42","ib-43","ib-44","ib-45","ib-46","ib-47","ib-48","ib-49","ib-50","ib-51","ib-52","ib-53","ib-54","ib-55","ib-56","ib-57","ib-58","ib-59","ib-60","ib-61","ib-62","ib-63","ib-64","ib-65","ib-66","ib-67","ib-68","ib-69","ib-70","ib-71","ib-72","ib-73","ib-74","ib-75","ib-76","ib-77","ib-78","ib-79","ib-80","ib-81","ib-82","ib-83","ib-84","ib-85","ib-86","ib-87","ib-88","ib-89","ib-90","ib-91","ib-92","ib-93","ib-94","ib-95","ib-96","ib-97","ib-98","ib-99","ib-100","ib-101","ib-102","ib-103","ib-104","ib-105","ib-106","ib-107","ib-108","ib-109","ib-110","ib-111","ib-112","ib-113","ib-114","ib-115","ib-116","ib-117","ib-118","ib-119","ib-120","ib-121","ib-122","ib-123","ib-124","ib-125","ib-126","ib-127","ib-128","ib-129","ib-130","ib-131","ib-132","sk-1","sk-2","sk-3","sk-4","sk-5","sk-6","sk-7","sk-8","sk-9","sk-10","sk-11","sk-12","sk-13","sk-14","sk-15","sk-16","sk-17","sk-18","sk-19","sk-20","sk-21","sk-22","sk-23","sk-24","sk-25"];
+  var ORDER=["tab-home","tab-params","tab-pwd","tab-session","tab-cert","ib-1","ib-2","ib-3","ib-4","ib-5","ib-6","ib-7","ib-8","ib-9","ib-10","ib-11","ib-12","ib-13","ib-14","ib-15","ib-16","ib-17","ib-18","ib-19","ib-20","ib-21","ib-22","ib-23","ib-24","ib-25","ib-26","ib-27","ib-28","ib-29","ib-30","ib-31","ib-32","ib-33","ib-34","ib-35","ib-36","ib-37","ib-38","ib-39","ib-40","ib-41","ib-42","ib-43","ib-44","ib-45","ib-46","ib-47","ib-48","ib-49","ib-50","ib-51","ib-52","ib-53","ib-54","ib-55","ib-56","ib-57","ib-58","ib-59","ib-60","ib-61","ib-62","ib-63","ib-64","ib-65","ib-66","ib-67","ib-68","ib-69","ib-70","ib-71","ib-72","ib-73","ib-74","ib-75","ib-76","ib-77","ib-78","ib-79","ib-80","ib-81","ib-82","ib-83","ib-84","ib-85","ib-86","ib-87","ib-88","ib-89","ib-90","ib-91","ib-92","ib-93","ib-94","ib-95","ib-96","ib-97","ib-98","ib-99","ib-100","ib-101","ib-102","ib-103","ib-104","ib-105","ib-106","ib-107","ib-108","ib-109","ib-110","ib-111","ib-112","ib-113","ib-114","ib-115","ib-116","ib-117","ib-118","ib-119","ib-120","ib-121","ib-122","ib-123","ib-124","ib-125","ib-126","ib-127","ib-128","ib-129","ib-130","ib-131","ib-132","sk-1","sk-2","sk-3","sk-4","sk-5","sk-6","sk-7","sk-8","sk-9","sk-10","sk-11","sk-12","sk-13","sk-14","sk-15","sk-16","sk-17","sk-18","sk-19","sk-20","sk-21","sk-22","sk-23","sk-24","sk-25"];
   var panels=[].slice.call(document.querySelectorAll('.panel'));
   var nav=document.getElementById('navList');
   var storeKey='termidesk-ib-progress-v2';
@@ -3832,7 +4065,19 @@ bash &quot;$DIR/check-integrity.sh&quot; &quot;${1:-/var/lib/termidesk/baseline.
       var text=(a.textContent+(panel?panel.textContent:'')).toLowerCase();
       a.parentElement.style.display=(!q||text.indexOf(q)>=0)?'':'none';
     });
+    document.querySelectorAll('.param-card').forEach(function(card){
+      var text=(card.getAttribute('data-search')||card.textContent).toLowerCase();
+      card.style.display=(!q||text.indexOf(q)>=0)?'':'none';
+    });
   };
+  document.querySelectorAll('.param-jump').forEach(function(a){
+    a.onclick=function(e){
+      e.preventDefault();
+      show('tab-params');
+      var el=document.getElementById(a.getAttribute('href').replace('#',''));
+      if(el) setTimeout(function(){el.scrollIntoView({behavior:'smooth',block:'start'});},100);
+    };
+  });
 
   var h=(location.hash||'#tab-home').replace('#','');
   show(document.getElementById(h)?h:'tab-home');

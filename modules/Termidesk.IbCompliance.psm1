@@ -287,7 +287,7 @@ function Export-TermideskIbComplianceHtml {
     [void]$orderList.Add('tab-home')
     [void]$panelsSb.AppendLine(@"
 <section id="tab-home" class="panel active" data-title="Старт">
-  <div class="panel-head"><h2>Апробирование Termidesk 7.0</h2><p class="lead">Один файл: пароли, сертификаты, сессии/API, полный перечень ИБ-1…132 и СК-1…25 — шаги, скриншоты и скрипты.</p></div>
+  <div class="panel-head"><h2>Апробирование Termidesk 7.0</h2><p class="lead">Один файл: справочник параметров, пароли, сертификаты, сессии/API, ИБ-1…132 и СК-1…25.</p></div>
   <div class="stat-grid">
     <div class="stat-card"><div class="stat-num" id="statTotal">$totalIb</div><div class="stat-label">требований ИБ</div></div>
     <div class="stat-card"><div class="stat-num">$totalSk</div><div class="stat-label">проверок СК</div></div>
@@ -297,22 +297,27 @@ function Export-TermideskIbComplianceHtml {
   <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
   <h3>С чего начать</h3>
   <div class="quick-grid">
-    <button type="button" class="quick-card" data-goto="tab-pwd"><span class="qc-icon">🔑</span><strong>1. Замена паролей</strong><span>PostgreSQL, RabbitMQ, admin, ключи</span></button>
-    <button type="button" class="quick-card" data-goto="tab-cert"><span class="qc-icon">🔐</span><strong>3. Сертификаты mTLS</strong><span>Выпуск cert, домен X.509</span></button>
-    <button type="button" class="quick-card" data-goto="tab-session"><span class="qc-icon">⏱</span><strong>4. Сессии и API</strong><span>Неактивность, TTL токена</span></button>
-    <button type="button" class="quick-card" data-goto="ib-1"><span class="qc-icon">📋</span><strong>5. ИБ-1…132</strong><span>Все требования по категориям</span></button>
-    <button type="button" class="quick-card" data-goto="sk-1"><span class="qc-icon">🖥</span><strong>6. СК-1…25</strong><span>Astra Linux, клиенты</span></button>
+    <button type="button" class="quick-card" data-goto="tab-params"><span class="qc-icon">📖</span><strong>2. Справочник параметров</strong><span>Где найти и как изменить</span></button>
+    <button type="button" class="quick-card" data-goto="tab-pwd"><span class="qc-icon">🔑</span><strong>3. Замена паролей</strong><span>PostgreSQL, RabbitMQ, admin</span></button>
+    <button type="button" class="quick-card" data-goto="tab-cert"><span class="qc-icon">🔐</span><strong>4. Сертификаты mTLS</strong><span>Выпуск cert, домен X.509</span></button>
+    <button type="button" class="quick-card" data-goto="tab-session"><span class="qc-icon">⏱</span><strong>5. Сессии и API</strong><span>Неактивность, TTL токена</span></button>
+    <button type="button" class="quick-card" data-goto="ib-1"><span class="qc-icon">📋</span><strong>6. ИБ-1…132</strong><span>Все требования по категориям</span></button>
+    <button type="button" class="quick-card" data-goto="sk-1"><span class="qc-icon">🖥</span><strong>7. СК-1…25</strong><span>Astra Linux, клиенты</span></button>
   </div>
   <p class="meta">Скрипты на диске: <code>output/19-ib-compliance/scripts/</code> · генерация: меню <kbd>[19]→2</kbd> или <kbd>[A]</kbd></p>
   <p class="meta">Портал стенда: <code>$portal</code></p>
 </section>
 "@)
 
+    $paramsPanel = New-TermideskHtmlParameterGuidePanel -Settings $Settings
+    [void]$orderList.Add('tab-params')
+    [void]$panelsSb.AppendLine($paramsPanel)
+
     # --- Passwords panel ---
     [void]$orderList.Add('tab-pwd')
     [void]$panelsSb.AppendLine(@"
 <section id="tab-pwd" class="panel" data-title="Замена паролей">
-  <div class="panel-head"><span class="tag tag-warn">ИБ-103 · ИБ-117 · ИБ-118</span><h2>Замена паролей — где и как</h2></div>
+  <div class="panel-head"><span class="tag tag-warn">ИБ-103 · ИБ-117 · ИБ-118</span><h2>Замена паролей — где и как</h2><p class="meta">Подробный справочник всех параметров: раздел <a href="#tab-params" data-goto="tab-params">📖 Параметры</a></p></div>
   <div class="card">
     <h3>① PostgreSQL — параметр DBPASS</h3>
     <ol class="steps"><li>Панель <kbd>[3] → 4</kbd> (SSH) или на узле БД:</li></ol>
@@ -357,7 +362,7 @@ function Export-TermideskIbComplianceHtml {
     [void]$orderList.Add('tab-session')
     [void]$panelsSb.AppendLine(@"
 <section id="tab-session" class="panel" data-title="Сессии и API">
-  <div class="panel-head"><h2>Сессии неактивности и срок API-токена</h2></div>
+  <div class="panel-head"><h2>Сессии неактивности и срок API-токена</h2><p class="meta">Параметры: <a href="#param-session-timeout" class="param-jump">таймаут сессии</a>, <a href="#param-api-token-ttl" class="param-jump">TTL API-токена</a> · <a href="#tab-params" data-goto="tab-params">полный справочник</a></p></div>
   <div class="card">
     <h3>Блокировка сессии по неактивности</h3>
     <p>Должна настраиваться длительность неактивности; восстановление — <b>только после повторной аутентификации</b>.</p>
@@ -382,7 +387,7 @@ function Export-TermideskIbComplianceHtml {
     [void]$orderList.Add('tab-cert')
     [void]$panelsSb.AppendLine(@"
 <section id="tab-cert" class="panel" data-title="Сертификаты mTLS">
-  <div class="panel-head"><span class="tag">ИБ-120 · ИБ-125</span><h2>Сертификат пользователя и аутентификация по сертификату</h2></div>
+  <div class="panel-head"><span class="tag">ИБ-120 · ИБ-125</span><h2>Сертификат пользователя и аутентификация по сертификату</h2><p class="meta">Параметры: <a href="#param-mtls" class="param-jump">MTLS_*</a>, <a href="#param-x509-domain" class="param-jump">домен X.509</a> · <a href="#tab-params" data-goto="tab-params">полный справочник</a></p></div>
   <div class="card">
     <h3>① Выпуск сертификата пользователя</h3>
     <p>На эталонном диспетчере или PKI-узле (меню <kbd>[10]</kbd>):</p>
@@ -533,6 +538,7 @@ function Export-TermideskIbComplianceHtml {
     $sidebarNav = New-Object System.Text.StringBuilder
     [void]$sidebarNav.AppendLine(@"
       <li><a href="#tab-home" data-tab="tab-home" class="active"><span class="nav-id">🏠 Старт</span><span class="nav-dot"></span></a></li>
+      <li><a href="#tab-params" data-tab="tab-params"><span class="nav-id">📖 Параметры</span><span class="nav-dot"></span></a></li>
       <li><a href="#tab-pwd" data-tab="tab-pwd"><span class="nav-id">🔑 Пароли</span><span class="nav-dot"></span></a></li>
       <li><a href="#tab-session" data-tab="tab-session"><span class="nav-id">⏱ Сессии/API</span><span class="nav-dot"></span></a></li>
       <li><a href="#tab-cert" data-tab="tab-cert"><span class="nav-id">🔐 Сертификаты</span><span class="nav-dot"></span></a></li>
@@ -655,6 +661,17 @@ code{font-family:Consolas,monospace;font-size:.86em;background:rgba(255,255,255,
 .alert{color:var(--warn);font-size:.9rem;margin:.5rem 0}
 .done-check{display:flex;align-items:center;gap:.5rem;margin-top:1.25rem;padding:.75rem;background:rgba(255,255,255,.03);border-radius:10px;cursor:pointer}
 .done-check input{width:18px;height:18px;accent-color:var(--ok)}
+.param-toc{display:flex;flex-wrap:wrap;gap:.4rem;margin:1rem 0}
+.param-toc a,.param-jump{font-size:.78rem;padding:.25rem .55rem;border:1px solid var(--border);border-radius:8px;color:var(--muted);text-decoration:none}
+.param-toc a:hover{color:var(--accent);border-color:var(--accent)}
+.param-group-title{margin:1.25rem 0 .5rem;font-size:.95rem;color:var(--warn);border-bottom:1px solid var(--border);padding-bottom:.35rem}
+.param-card{border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem;margin:.75rem 0;background:rgba(255,255,255,.02)}
+.param-head{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.5rem}
+.param-head code{font-size:.95rem;color:var(--accent);background:none;padding:0}
+.param-card h4{margin:.65rem 0 .3rem;font-size:.78rem;color:var(--warn);text-transform:uppercase;letter-spacing:.04em}
+.param-where{margin:.25rem 0 .5rem;padding-left:1.2rem;font-size:.88rem}
+.param-where li{margin:.25rem 0}
+.param-how{margin-bottom:0}
 .nav-footer{position:fixed;bottom:0;left:var(--sidebar-w);right:0;display:flex;justify-content:space-between;padding:.75rem 1.5rem;background:rgba(18,24,32,.95);border-top:1px solid var(--border);backdrop-filter:blur(8px);z-index:15}
 .nav-footer button{padding:.55rem 1.1rem;border-radius:10px;border:1px solid var(--border);background:var(--panel);color:var(--text)}
 .nav-footer button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -795,7 +812,19 @@ $($panelsSb.ToString())
       var text=(a.textContent+(panel?panel.textContent:'')).toLowerCase();
       a.parentElement.style.display=(!q||text.indexOf(q)>=0)?'':'none';
     });
+    document.querySelectorAll('.param-card').forEach(function(card){
+      var text=(card.getAttribute('data-search')||card.textContent).toLowerCase();
+      card.style.display=(!q||text.indexOf(q)>=0)?'':'none';
+    });
   };
+  document.querySelectorAll('.param-jump').forEach(function(a){
+    a.onclick=function(e){
+      e.preventDefault();
+      show('tab-params');
+      var el=document.getElementById(a.getAttribute('href').replace('#',''));
+      if(el) setTimeout(function(){el.scrollIntoView({behavior:'smooth',block:'start'});},100);
+    };
+  });
 
   var h=(location.hash||'#tab-home').replace('#','');
   show(document.getElementById(h)?h:'tab-home');
@@ -825,6 +854,6 @@ function Export-TermideskIbScenarioScripts {
 }
 
 Export-ModuleMember -Function @(
-    'Get-TermideskIbScenarios','Get-TermideskSkScenarios','Get-TermideskIbRequirementsCatalog','Export-TermideskIbComplianceHtml',
-    'Export-TermideskIbScenarioScripts'
+    'Get-TermideskIbScenarios','Get-TermideskSkScenarios','Get-TermideskIbRequirementsCatalog',
+    'Get-TermideskParameterGuide','Export-TermideskIbComplianceHtml','Export-TermideskIbScenarioScripts'
 )

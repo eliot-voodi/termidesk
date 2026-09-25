@@ -1,183 +1,7 @@
 # Termidesk 7.0 — генерация HTML апробирования ИБ и per-scenario скриптов
 
-function Get-TermideskIbScenarios {
-    param([object]$Settings)
-    $portal = if ($Settings.portal.url) { $Settings.portal.url } else { 'https://portal.example.ru' }
-    @(
-        @{ Id='ИБ-91'; Cat='Журналирование'; Req='При заполнении установленного процента объёма памяти для локальных журналов ИБ должно выдаваться предупреждение'
-            Steps=@('Сгенерируйте артефакты: меню [19]→2 или [A]','На эталонном диспетчере выполните скрипт с порогом 80%','Убедитесь, что при превышении порога выводится WARNING ИБ-91','При необходимости настройте мониторинг Zabbix на тот же порог')
-            Shots=@('Мониторинг → триггер заполнения /var/log/termidesk','Вывод скрипта с WARNING при тестовом заполнении диска')
-            Script='scripts/ib-91-check-log-disk.sh'; Type='bash'; Exp='Скрипт возвращает WARNING при ≥80% заполнения тома с журналами' }
-        @{ Id='ИБ-92'; Cat='Журналирование'; Req='При заполнении журналов должна производиться перезапись событий'
-            Steps=@('Откройте портал администратора → Система → Системные настройки → Аудит','Включите «Сохранение в файл журнала»','Задайте «Количество архивных файлов (7-30)» — например 14','В termidesk.conf проверьте LOG_DEEP (уровень ротации)','Выполните скрипт проверки ротации')
-            Shots=@('Портал: раздел Аудит — параметр архивных файлов','Каталог /var/log/termidesk/ — файлы audit.log.* после ротации')
-            Script='scripts/ib-92-check-log-rotation.sh'; Type='bash'; Exp='LOG_DEEP задан; audit.log.* существуют; ротация настроена' }
-        @{ Id='ИБ-93'; Cat='Журналирование'; Req='Локальные журналы ИБ защищены от несанкционированного просмотра и изменений'
-            Steps=@('Выполните скрипт проверки прав на диспетчере','Убедитесь: mode 0440 или строже, владелец termidesk:adm','Проверьте audit.log и каталог LOG_DIR')
-            Shots=@('Вывод stat для /var/log/termidesk/audit.log','Права каталога /var/log/termidesk')
-            Script='scripts/ib-93-check-log-permissions.sh'; Type='bash'; Exp='Скрипт завершается с кодом 0, права 0440/0400' }
-        @{ Id='ИБ-94'; Cat='Журналирование'; Req='Системное время синхронизируется с доверенным NTP-источником'
-            Steps=@('На всех узлах: timedatectl set-ntp true','В мастере [18] задайте NTP-сервер','Выполните скрипт проверки синхронизации')
-            Shots=@('timedatectl status — System clock synchronized: yes','Конфиг /etc/systemd/timesyncd.conf или chrony')
-            Script='scripts/ib-94-check-ntp.sh'; Type='bash'; Exp='NTP active, часы синхронизированы' }
-        @{ Id='ИБ-95'; Cat='Журналирование'; Req='Интеграция журналирования с SIEM (syslog, database, API)'
-            Steps=@('Портал → Аудит → «Отправка в Syslog» = Да','Укажите хост SIEM, порт, протокол TCP/TLS','Выполните configure-audit-syslog.sh на диспетчере','Проверьте поступление событий на SIEM')
-            Shots=@('Портал: параметры Syslog в разделе Аудит','SIEM: входящее событие AUDIT от Termidesk')
-            Script='scripts/ib-95-configure-syslog.sh'; Type='bash'; Exp='rsyslog пересылает audit; события видны в SIEM' }
-        @{ Id='ИБ-96'; Cat='Журналирование'; Req='Соответствие списка событий ГОСТ Р 59548-2022'
-            Steps=@('Откройте документацию Termidesk «Типы событий аудита»','Сверьте атрибуты с таблицей ГОСТ','Выполните скрипт выборки типов событий из audit.log')
-            Shots=@('Документация: типы событий аудита Termidesk','Пример записи audit.log с полями события')
-            Script='scripts/ib-96-check-audit-events.sh'; Type='bash'; Exp='События содержат идентификатор, время, субъект, объект, результат' }
-        @{ Id='ИБ-97'; Cat='Журналирование'; Req='Подсистема журналирования ИБ отделена от системных событий'
-            Steps=@('Убедитесь INTERNAL_AUDIT=True в termidesk.conf','Проверьте отдельный файл /var/log/termidesk/audit.log','Системные логи не смешиваются с audit')
-            Shots=@('Файл audit.log отдельно от syslog/journal','Портал: INTERNAL_AUDIT включён')
-            Script='scripts/ib-97-check-audit-separation.sh'; Type='bash'; Exp='audit.log существует; programname termidesk audit отделён' }
-        @{ Id='ИБ-98'; Cat='Журналирование'; Req='В документации описаны типовые инциденты и процедуры реагирования'
-            Steps=@('Откройте incident-response-ib98.md','Согласуйте с локальным SOC процедуры','Включите ссылку в эксплуатационную документацию стенда')
-            Shots=@('Таблица инцидентов в incident-response-ib98.md')
-            Script=''; Type='doc'; Exp='Документ согласован; процедуры утверждены' }
-        @{ Id='ИБ-99'; Cat='Защита ПО'; Req='Корректная работа с корпоративным антивирусом'
-            Steps=@('Получите рекомендации Kaspersky/Dr.Web для VDI','Добавьте исключения для /opt/termidesk, /var/log/termidesk','Проверьте работу termidesk-vdi при включённом AV')
-            Shots=@('Политика AV: исключения путей Termidesk','Служба termidesk-vdi active при AV')
-            Script='scripts/ib-99-antivirus-paths.txt'; Type='doc'; Exp='AV не блокирует компоненты; исключения применены' }
-        @{ Id='ИБ-100'; Cat='Защита ПО'; Req='СМЗИС: нет уязвимостей High/Critical в компонентах'
-            Steps=@('Загрузите отчёт MaxPatrol/Nexpose по узлам Termidesk','Устраните Critical/High или задокументируйте компенсации','Обновите пакеты Termidesk до актуальной версии 7.0')
-            Shots=@('Отчёт СМЗИС без Critical/High по termidesk-* пакетам')
-            Script='scripts/ib-100-vulnerability-checklist.ps1'; Type='powershell'; Exp='Нет открытых Critical/High по матрице стенда' }
-        @{ Id='ИБ-101'; Cat='Защита ПО'; Req='Интерфейс состояния объектов аудита ИБ (health API)'
-            Steps=@('Задайте HEALTH_CHECK_ACCESS_KEY в termidesk-settings.json','Выполните check-health-api.ps1 с Windows','Проверьте /api/health и /api/health/metrics')
-            Shots=@('Ответ JSON /api/health/?key=...','Metrics API — статус компонентов')
-            Script='scripts/ib-101-check-health-api.ps1'; Type='powershell'; Exp='Health OK, metrics доступны' }
-        @{ Id='ИБ-102'; Cat='Защита ПО'; Req='Документация содержит сетевые параметры (протоколы, порты)'
-            Steps=@('Откройте network-ports-ib102.txt и firewall-ports.txt','Сверьте с матрицей firewall стенда','Добавьте в эксплуатационную документацию')
-            Shots=@('Таблица портов в network-ports-ib102.txt')
-            Script='scripts/ib-102-network-ports.txt'; Type='doc'; Exp='Порты задокументированы и согласованы с СИ' }
-        @{ Id='ИБ-103'; Cat='Защита ПО'; Req='Настройки по умолчанию, опасные для НСД, заменяются'
-            Steps=@('Смените пароль PostgreSQL — см. вкладку «Замена паролей»','Смените пароль RabbitMQ','Смените пароль admin портала','Задайте HEALTH_CHECK_ACCESS_KEY','Выполните скрипт проверки defaults')
-            Shots=@('termidesk.conf — нет пустых DBPASS/RABBITMQ_PASS','Портал: смена пароля admin')
-            Script='scripts/ib-103-check-defaults.sh'; Type='bash'; Exp='Нет дефолтных/пустых паролей в конфиге'; Pwd=$true }
-        @{ Id='ИБ-104'; Cat='Защита ПО'; Req='Своевременный выпуск обновлений'
-            Steps=@('Проверьте доступность репозитория Termidesk 7.0','Выполните apt list --upgradable | grep termidesk','Зафиксируйте версию в протоколе')
-            Shots=@('apt policy termidesk-vdi — актуальная версия')
-            Script='scripts/ib-104-check-updates.sh'; Type='bash'; Exp='Пакеты актуальны или план обновления утверждён' }
-        @{ Id='ИБ-105'; Cat='Защита ПО'; Req='Совместимость с CI/CD при контейнеризации'
-            Steps=@('Для .deb-установки: N/A — зафиксируйте в протоколе','При контейнерах: используйте корпоративный registry')
-            Shots=@('Протокол: способ поставки .deb')
-            Script=''; Type='manual'; Exp='Способ поставки документирован' }
-        @{ Id='ИБ-106'; Cat='Защита ПО'; Req='Настройка по требованиям ИБ-7'
-            Steps=@('Пройдите НАСТРОЙКА-КЛАСТЕРА.html','Примените политики безопасности портала','Выполните чек-лист ib-106')
-            Shots=@('Production-чек-лист HA выполнен')
-            Script='scripts/ib-106-security-checklist.sh'; Type='bash'; Exp='Чек-лист ИБ-7 выполнен' }
-        @{ Id='ИБ-107'; Cat='Защита ПО'; Req='Соответствие требованиям ГПН (КТ-233)'
-            Steps=@('Сформируйте матрицу соответствия КТ-233','Приложите к протоколу апробирования')
-            Shots=@('Матрица соответствия КТ-233')
-            Script='scripts/ib-107-gpn-matrix.md'; Type='doc'; Exp='Матрица заполнена и согласована' }
-        @{ Id='ИБ-108'; Cat='Защита ПО'; Req='CI/CD встроенного языка'
-            Steps=@('Termidesk не содержит встроенного языка — N/A','Зафиксируйте в протоколе')
-            Script=''; Type='manual'; Exp='N/A задокументировано' }
-        @{ Id='ИБ-109'; Cat='Защита ПО'; Req='Поставка через корпоративные репозитории'
-            Steps=@('Проверьте sources.list.d/termidesk-vdi.list','Убедитесь, что repo — корпоративный mirror Termidesk')
-            Shots=@('/etc/apt/sources.list.d/termidesk-vdi.list')
-            Script='scripts/ib-109-check-repo.sh'; Type='bash'; Exp='Репозиторий из утверждённого списка' }
-        @{ Id='ИБ-110'; Cat='Целостность'; Req='Контроль целостности программных компонент и конфигов'
-            Steps=@('Создайте baseline: sudo bash check-integrity.sh /var/lib/termidesk/baseline.sha256 create','Периодически проверяйте без create','При изменении — расследование')
-            Shots=@('Вывод OK для termidesk.conf и termidesk-config')
-            Script='scripts/ib-110-check-integrity.sh'; Type='bash'; Exp='Контрольные суммы совпадают' }
-        @{ Id='ИБ-111'; Cat='Целостность'; Req='Описание механизмов проверки целостности в документации'
-            Steps=@('Опишите процедуру ib-110 в эксплуатационной доку','Укажите ЗПС termidesk-digsig-keys')
-            Script='scripts/ib-111-integrity-procedure.md'; Type='doc'; Exp='Процедура описана' }
-        @{ Id='ИБ-112'; Cat='Доступность'; Req='Возможность отказоустойчивого исполнения'
-            Steps=@('Разверните HA по [18]: ≥2 диспетчера, шлюза, LB','Выполните healthcheck и failover-тест')
-            Shots=@('Портал: статус компонентов — все green','Отключение одного диспетчера — VIP доступен')
-            Script='scripts/ib-112-ha-check.ps1'; Type='powershell'; Exp='Кластер доступен при отказе одного узла' }
-        @{ Id='ИБ-113'; Cat='Доступность'; Req='Резервное копирование и восстановление'
-            Steps=@('Настройте [16] backup-db.sh и backup-config.sh','Выполните тестовое восстановление на стенде','Задокументируйте расписание и retention')
-            Shots=@('Файл backup termidesk_*.tar','Успешный restore на тестовом узле')
-            Script='../16-backup/backup-db.sh'; Type='bash'; Exp='Backup и restore проверены' }
-        @{ Id='ИБ-114'; Cat='Сеть'; Req='Взаимодействие с Internet через корпоративный прокси (белый список)'
-            Steps=@('Задайте HTTP_PROXY/HTTPS_PROXY на узлах обновления','Ограничьте исходящий трафик firewall','Проверьте apt update через прокси')
-            Shots=@('/etc/environment — proxy vars','Firewall: deny default outbound')
-            Script='scripts/ib-114-proxy-example.sh'; Type='bash'; Exp='Обновления только через прокси' }
-        @{ Id='ИБ-115'; Cat='Сеть'; Req='Разделение Front-End и Back-End'
-            Steps=@('Front: nginx VIP :443','Back: диспетчеры, PostgreSQL, RabbitMQ в защищённом сегменте','Клиенты не имеют прямого доступа к 5432/5672')
-            Shots=@('Схема сети: VIP → LB → dispatchers','Firewall: 5432 только с подсети приложений')
-            Script='scripts/ib-115-segmentation-checklist.md'; Type='doc'; Exp='Сегментация реализована' }
-        @{ Id='ИБ-116'; Cat='Сеть'; Req='Нет неотключаемых функций Internet (лицензии)'
-            Steps=@('Убедитесь: on-prem Termidesk не требует постоянного Internet','Отключите исходящий Internet — портал работает')
-            Script='scripts/ib-116-offline-check.sh'; Type='bash'; Exp='Работа без Internet подтверждена' }
-        @{ Id='ИБ-117'; Cat='Криптография'; Req='Пароли хранятся и передаются в хешированном виде'
-            Steps=@('PostgreSQL: scram-sha-256 в pg_hba.conf','termidesk.conf: DBPASS через scramble','Не храните plaintext в git')
-            Shots=@('pg_hba.conf — scram-sha-256','scramble --value test (демо преобразования)')
-            Script='scripts/ib-117-check-password-storage.sh'; Type='bash'; Exp='scram-sha-256; scramble в conf'; Pwd=$true }
-        @{ Id='ИБ-118'; Cat='Криптография'; Req='Стойкие хэш-алгоритмы (SHA512, PBKDF2, bcrypt, scrypt)'
-            Steps=@('Используйте scramble --type AES256_V2 для conf','RabbitMQ: password_hash в definitions.json')
-            Script='scripts/ib-118-check-hash-algo.sh'; Type='bash'; Exp='AES256_V2 / современные алгоритмы' }
-        @{ Id='ИБ-119'; Cat='Криптография'; Req='TLS 1.2+, AES128-256'
-            Steps=@('nginx ssl_protocols TLSv1.2 TLSv1.3','Проверьте openssl s_client -connect VIP:443')
-            Shots=@('nginx ssl-params — TLSv1.2 TLSv1.3','openssl s_client — Protocol TLSv1.3')
-            Script='scripts/ib-119-check-tls.sh'; Type='bash'; Exp='Только TLS 1.2+' }
-        @{ Id='ИБ-120'; Cat='Криптография'; Req='Проверка ЭП/сертификата узла или пользователя'
-            Steps=@('Настройте mTLS: [10] → generate-user-certificate.sh','Домен X.509 в портале','Проверьте вход с клиентским сертификатом')
-            Shots=@('termidesk-config — MTLS_MODE','Успешный login по сертификату')
-            Script='../10-ssl/generate-user-certificate.sh'; Type='bash'; Exp='mTLS и домен X.509 работают' }
-        @{ Id='ИБ-121'; Cat='Криптография'; Req='Шифрование канала в КСПД'
-            Steps=@('TLS на VIP FQDN','Корпоративный сертификат, не self-signed'); Script='scripts/ib-121-125-tls-connectivity.sh'; Type='bash'; Exp='HTTPS TLS 1.2+ на пользовательском канале' }
-        @{ Id='ИБ-122'; Cat='Криптография'; Req='Шифрование канала в ЦДМZ'
-            Steps=@('TLS на границе DMZ','Разделение front/back — IB-115'); Script='scripts/ib-121-125-tls-connectivity.sh'; Type='bash'; Exp='TLS в DMZ подтверждён' }
-        @{ Id='ИБ-123'; Cat='Криптография'; Req='Шифрование внутрисистемного взаимодействия'
-            Steps=@('HTTPS диспетчеры; опционально PostgreSQL SSL (DBCERT)','AMQPS при необходимости'); Script='scripts/ib-121-125-tls-connectivity.sh'; Type='bash'; Exp='Межкомпонентное HTTPS/TLS' }
-        @{ Id='ИБ-124'; Cat='Криптография'; Req='Шифрование с внешними ИС'
-            Steps=@('LDAPS к AD; HTTPS к oVirt; syslog TLS к SIEM'); Script='scripts/ib-121-125-tls-connectivity.sh'; Type='bash'; Exp='Внешние интеграции по TLS' }
-        @{ Id='ИБ-125'; Cat='Криптография'; Req='Интеграция с корпоративной PKI'
-            Steps=@('Установите корпоративный CA на LB и клиентов','mTLS с корпоративными сертификатами'); Script='scripts/ib-125-pki-checklist.md'; Type='doc'; Exp='PKI интегрирована' }
-        @{ Id='ИБ-126'; Cat='Криптография'; Req='Ключи/ЭП на отчуждаемом носителе'
-            Steps=@('Сценарий STAL + smart-card / Рutoken','Kerberos keytab по документации STAL'); Script=''; Type='manual'; Exp='Smart-card сценарий работает' }
-        @{ Id='ИБ-127'; Cat='Криптография'; Req='Обезличивание ПДн'
-            Steps=@('Минимизируйте ПДн в audit.log','Политики домена — маскирование при экспорте'); Script=''; Type='manual'; Exp='ПДн обезличены по политике' }
-        @{ Id='ИБ-128'; Cat='Криптография'; Req='Поддержка СКЗИ ГОСТ'
-            Steps=@('При требовании — CryptoPro CSP + совместимая сборка Termidesk'); Script=''; Type='manual'; Exp='СКЗИ сертифицировано и работает' }
-        @{ Id='ИБ-129'; Cat='Криптография'; Req='Заключение ФСБ по СКЗИ'
-            Steps=@('Приложите заключение ФСБ на используемое СКЗИ'); Script=''; Type='doc'; Exp='Документы приложены' }
-        @{ Id='ИБ-130'; Cat='НДВ'; Req='Контроль целостности по документации вендора'
-            Steps=@('Используйте ib-110-check-integrity.sh','Сверьте с процедурой ЗПС'); Script='scripts/ib-110-check-integrity.sh'; Type='bash'; Exp='Целостность подтверждена' }
-        @{ Id='ИБ-131'; Cat='НДВ'; Req='Отсутствие НДВ (динамический анализ)'
-            Steps=@('Приложите отчёт DAST/пентест без критичных НДВ'); Script=''; Type='doc'; Exp='Отчёт приложен' }
-        @{ Id='ИБ-132'; Cat='НДВ'; Req='Отсутствие НДВ (статический анализ исходников)'
-            Steps=@('При наличии исходников — отчёт SAST вендора'); Script=''; Type='doc'; Exp='SAST отчёт приложен' }
-    )
-}
+. "$PSScriptRoot\IbRequirementsCatalog.ps1"
 
-function Get-TermideskSkScenarios {
-    param([object]$Settings)
-    $portal = if ($Settings.portal.url) { $Settings.portal.url } else { 'https://portal.example.ru' }
-    @(
-        @{ Id='СК-1'; Req='Веб в Яндекс Браузере'; Steps=@("На Astra Linux SE «Воронеж» откройте $portal в Яндекс Браузере"); Shots=@('Главная страница портала без ошибок SSL/вёрстки'); Exp='Страница загружается' }
-        @{ Id='СК-2'; Req='Отображение UI'; Steps=@('Визуально осмотрите портал после входа'); Shots=@('Скриншот UI портала — элементы на месте'); Exp='Без артефактов вёрстки' }
-        @{ Id='СК-3'; Req='Работа веб-интерфейса'; Steps=@('Логин admin','Навигация по разделам','Выдача тестовой ВРМ'); Shots=@('Успешный логин','Список рабочих мест'); Exp='Функции доступны' }
-        @{ Id='СК-4'; Req='Установка нативного клиента'; Steps=@('Установите .deb клиента Termidesk из корпоративного репозитория'); Shots=@('dpkg -l | grep termidesk'); Exp='Пакет установлен' }
-        @{ Id='СК-5'; Req='Запуск нативного клиента'; Steps=@('Запустите termidesk-connect / TERA client'); Shots=@('Процесс клиента в ps/top'); Exp='Клиент стартует' }
-        @{ Id='СК-6'; Req='GUI нативного клиента'; Steps=@('Откройте главное окно клиента'); Shots=@('Главное окно — все элементы видны'); Exp='GUI отображается корректно' }
-        @{ Id='СК-7'; Req='Элементы управления'; Steps=@('Проверьте кнопки, списки, меню'); Shots=@('Клик по основным элементам'); Exp='Элементы реагируют' }
-        @{ Id='СК-8'; Req='Интерактивные элементы'; Steps=@('Откройте диалоги и формы в клиенте'); Shots=@('Диалог подключения / настройки'); Exp='Формы работают' }
-        @{ Id='СК-9'; Req='Целевые интеграции'; Steps=@('Подключитесь к фонду/шлюзу со стенда'); Shots=@('Активная сессия ВРМ'); Exp='Сессия устанавливается' }
-        @{ Id='СК-10'; Req='Буфер обмена'; Steps=@('Copy/paste между локальной ОС и сессией'); Shots=@('Текст скопирован в обе стороны'); Exp='Данные передаются' }
-        @{ Id='СК-11'; Req='Р7-Офис'; Steps=@('Откройте документ Р7 из сессии'); Shots=@('Документ открыт, обмен данными'); Exp='Интеграция OK' }
-        @{ Id='СК-12'; Req='Файловая система'; Steps=@('Доступ к FS из клиента (если включено политикой)'); Shots=@('Операции с файлами'); Exp='Операции выполняются' }
-        @{ Id='СК-13'; Req='Штатный выход'; Steps=@('Закройте клиент через меню «Выход»'); Shots=@('Процесс завершён без зависания'); Exp='Выход без ошибок' }
-        @{ Id='СК-14'; Req='Wine: установка Windows-клиента'; Steps=@('wine ./setup.exe или аналог по матрице вендора'); Shots=@('Установщик завершён'); Exp='Клиент установлен в Wine' }
-        @{ Id='СК-15'; Req='Wine: запуск'; Steps=@('Запустите Windows-клиент через Wine'); Shots=@('Окно клиента в Wine'); Exp='Клиент запускается' }
-        @{ Id='СК-16'; Req='Wine: GUI'; Steps=@('Проверьте отображение интерфейса'); Shots=@('GUI без критичных артефактов'); Exp='GUI приемлем' }
-        @{ Id='СК-17'; Req='Wine: элементы управления'; Steps=@('Кнопки и меню в Wine-клиенте'); Shots=@('Интерактивность элементов'); Exp='Управление работает' }
-        @{ Id='СК-18'; Req='Wine: подключение'; Steps=@('Подключение к стенду через Wine-клиент'); Shots=@('Сессия через Wine'); Exp='Подключение OK' }
-        @{ Id='СК-19'; Req='Wine: буфер обмена'; Steps=@('Copy/paste в Wine-сессии'); Shots=@('Обмен через буфер'); Exp='Буфер работает' }
-        @{ Id='СК-20'; Req='Wine: файловая система'; Steps=@('Доступ к файлам в Wine-сценарии'); Shots=@('Файловые операции'); Exp='FS доступна' }
-        @{ Id='СК-21'; Req='Wine: выход'; Steps=@('Штатное закрытие Wine-клиента'); Shots=@('Процессы завершены'); Exp='Без зависания' }
-        @{ Id='СК-22'; Req='Wine: доп. интеграция 1'; Steps=@('По матрице вендора — доп. проверка'); Shots=@('Скриншот проверки'); Exp='По матрице OK' }
-        @{ Id='СК-23'; Req='Wine: доп. интеграция 2'; Steps=@('По матрице вендора — доп. проверка'); Shots=@('Скриншот проверки'); Exp='По матрице OK' }
-        @{ Id='СК-24'; Req='Вызов прикладного ПО'; Steps=@('URI/handler из клиента на локальное ПО'); Shots=@('Вызов handler'); Exp='ПО вызывается' }
-        @{ Id='СК-25'; Req='Запуск вызванного ПО'; Steps=@('Проверьте процесс вызванного приложения в ОС'); Shots=@('ps — процесс запущен'); Exp='Процесс запущен' }
-    )
-}
 
 function Get-TermideskIbScenarioScriptContents {
     param([object]$Settings)
@@ -368,6 +192,7 @@ function Resolve-TermideskHtmlScriptRelPath {
     if ($ScriptRef -match '^\.\./') { return "output/$($ScriptRef -replace '^\.\./','')" }
     if ($ScriptRef -match '^output/') { return ($ScriptRef -replace '\\','/') }
     if ($ScriptRef -match '^scripts/') { return "output/19-ib-compliance/$ScriptRef" }
+    if ($ScriptRef -match '\.(md|txt|ps1|sh|conf)$') { return "output/19-ib-compliance/$ScriptRef" }
     return "output/$ScriptRef"
 }
 
@@ -462,7 +287,7 @@ function Export-TermideskIbComplianceHtml {
     [void]$orderList.Add('tab-home')
     [void]$panelsSb.AppendLine(@"
 <section id="tab-home" class="panel active" data-title="Старт">
-  <div class="panel-head"><h2>Апробирование Termidesk 7.0</h2><p class="lead">Один файл: пароли, сертификаты, сессии/API, ИБ-91…132 и СК-1…25 — шаги, скриншоты и скрипты.</p></div>
+  <div class="panel-head"><h2>Апробирование Termidesk 7.0</h2><p class="lead">Один файл: пароли, сертификаты, сессии/API, полный перечень ИБ-1…132 и СК-1…25 — шаги, скриншоты и скрипты.</p></div>
   <div class="stat-grid">
     <div class="stat-card"><div class="stat-num" id="statTotal">$totalIb</div><div class="stat-label">требований ИБ</div></div>
     <div class="stat-card"><div class="stat-num">$totalSk</div><div class="stat-label">проверок СК</div></div>
@@ -475,7 +300,7 @@ function Export-TermideskIbComplianceHtml {
     <button type="button" class="quick-card" data-goto="tab-pwd"><span class="qc-icon">🔑</span><strong>1. Замена паролей</strong><span>PostgreSQL, RabbitMQ, admin, ключи</span></button>
     <button type="button" class="quick-card" data-goto="tab-cert"><span class="qc-icon">🔐</span><strong>3. Сертификаты mTLS</strong><span>Выпуск cert, домен X.509</span></button>
     <button type="button" class="quick-card" data-goto="tab-session"><span class="qc-icon">⏱</span><strong>4. Сессии и API</strong><span>Неактивность, TTL токена</span></button>
-    <button type="button" class="quick-card" data-goto="ib-91"><span class="qc-icon">📋</span><strong>5. ИБ-91…132</strong><span>Журналы, TLS, HA…</span></button>
+    <button type="button" class="quick-card" data-goto="ib-1"><span class="qc-icon">📋</span><strong>5. ИБ-1…132</strong><span>Все требования по категориям</span></button>
     <button type="button" class="quick-card" data-goto="sk-1"><span class="qc-icon">🖥</span><strong>6. СК-1…25</strong><span>Astra Linux, клиенты</span></button>
   </div>
   <p class="meta">Скрипты на диске: <code>output/19-ib-compliance/scripts/</code> · генерация: меню <kbd>[19]→2</kbd> или <kbd>[A]</kbd></p>
@@ -592,7 +417,11 @@ function Export-TermideskIbComplianceHtml {
 </section>
 "@)
 
-    $catOrder = @('Журналирование','Защита ПО','Целостность','Доступность','Сеть','Криптография','НДВ')
+    $catOrder = @(
+        'Общие требования','Идентификация и аутентификация','Управление доступом','Регистрация и учет событий ИБ'
+        'Защита программного обеспечения','Обеспечение целостности','Обеспечение доступности','Сетевая безопасность'
+        'Криптографическая защита','Контроль НДВ'
+    )
     $idx = 0
     foreach ($sc in $scenarios) {
         $idx++
@@ -606,6 +435,8 @@ function Export-TermideskIbComplianceHtml {
         $exp = ConvertTo-TermideskHtmlEncode $(if ($sc.Exp) { $sc.Exp } else { 'Критерий выполнен' })
         $stepsHtml = ($sc.Steps | ForEach-Object { "<li>$(ConvertTo-TermideskHtmlEncode $_)</li>" }) -join ''
         $pwdLink = if ($sc.Pwd) { '<p class="alert">⚠️ Сначала выполните раздел «Замена паролей».</p>' } else { '' }
+        $certLink = if ($sc.Cert) { '<p class="alert">⚠️ См. раздел «Сертификаты» (mTLS, домен X.509).</p>' } else { '' }
+        $sessionLink = if ($sc.Session) { '<p class="alert">⚠️ См. раздел «Сессии/API» (неактивность, TTL токена).</p>' } else { '' }
 
         $scriptSection = ''
         if ($sc.Script) {
@@ -641,6 +472,8 @@ function Export-TermideskIbComplianceHtml {
   </div>
   <p class="req">$req</p>
   $pwdLink
+  $certLink
+  $sessionLink
   <h3>Шаги</h3>
   <ol class="steps">$stepsHtml</ol>
   $shotsHtml
@@ -653,13 +486,14 @@ function Export-TermideskIbComplianceHtml {
 
     # --- SK scenarios ---
     $skIdx = 0
-    $skMap = @()
+    $skCatMap = @{}
     foreach ($sc in $skScenarios) {
         $skIdx++
         $id = $sc.Id
         $slug = ($id -replace 'СК-','sk-').ToLower()
         [void]$orderList.Add($slug)
-        $skMap += $slug
+        if (-not $skCatMap.ContainsKey($sc.Cat)) { $skCatMap[$sc.Cat] = @() }
+        $skCatMap[$sc.Cat] += $slug
 
         $req = ConvertTo-TermideskHtmlEncode $sc.Req
         $exp = ConvertTo-TermideskHtmlEncode $(if ($sc.Exp) { $sc.Exp } else { 'Критерий выполнен' })
@@ -679,7 +513,7 @@ function Export-TermideskIbComplianceHtml {
         [void]$panelsSb.AppendLine(@"
 <section id="$slug" class="panel" data-title="$id" data-cat="СК" data-idx="$skIdx">
   <div class="panel-head">
-    <span class="tag tag-sk">СК</span>
+    <span class="tag tag-sk">$($sc.Cat)</span>
     <span class="tag tag-muted">$skIdx / $totalSk</span>
     <h2>$id</h2>
   </div>
@@ -714,15 +548,24 @@ function Export-TermideskIbComplianceHtml {
         }
         [void]$sidebarNav.AppendLine('      </ul></li>')
     }
-    if ($skMap.Count -gt 0) {
-        [void]$sidebarNav.AppendLine("      <li class=""nav-group""><button type=""button"" class=""grp-toggle"" aria-expanded=""true"">СК (совместимость)</button><ul class=""grp-items"">")
-        foreach ($slug in $skMap) {
-            $sc = $skScenarios | Where-Object { ($_.Id -replace 'СК-','sk-').ToLower() -eq $slug } | Select-Object -First 1
-            if ($sc) {
-                [void]$sidebarNav.AppendLine("        <li><a href=""#$slug"" data-tab=""$slug"" data-cat=""СК""><span class=""nav-id"">$($sc.Id)</span><span class=""nav-dot""></span></a></li>")
+    if ($skCatMap.Count -gt 0) {
+        $skCatOrder = @(
+            'Совместимость веб-клиента','Совместимость нативных клиентов'
+            'Совместимость нативных клиентов Windows в среде AstraLinux с использованием Wine'
+            'Совместимость клиентов всех типов, требующих вызова прикладного или общесистемного ПО'
+        )
+        foreach ($cat in $skCatOrder) {
+            if (-not $skCatMap.ContainsKey($cat)) { continue }
+            $shortCat = if ($cat.Length -gt 42) { $cat.Substring(0, 40) + '…' } else { $cat }
+            [void]$sidebarNav.AppendLine("      <li class=""nav-group""><button type=""button"" class=""grp-toggle"" aria-expanded=""true"">$shortCat</button><ul class=""grp-items"">")
+            foreach ($slug in $skCatMap[$cat]) {
+                $sc = $skScenarios | Where-Object { ($_.Id -replace 'СК-','sk-').ToLower() -eq $slug } | Select-Object -First 1
+                if ($sc) {
+                    [void]$sidebarNav.AppendLine("        <li><a href=""#$slug"" data-tab=""$slug"" data-cat=""$cat""><span class=""nav-id"">$($sc.Id)</span><span class=""nav-dot""></span></a></li>")
+                }
             }
+            [void]$sidebarNav.AppendLine('      </ul></li>')
         }
-        [void]$sidebarNav.AppendLine('      </ul></li>')
     }
 
     $orderJson = ($orderList | ForEach-Object { """$_""" }) -join ','
@@ -982,6 +825,6 @@ function Export-TermideskIbScenarioScripts {
 }
 
 Export-ModuleMember -Function @(
-    'Get-TermideskIbScenarios','Get-TermideskSkScenarios','Export-TermideskIbComplianceHtml',
+    'Get-TermideskIbScenarios','Get-TermideskSkScenarios','Get-TermideskIbRequirementsCatalog','Export-TermideskIbComplianceHtml',
     'Export-TermideskIbScenarioScripts'
 )
